@@ -1,51 +1,36 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import "./App.css";
 
-/**
- * NeuroMix v1 — no backend, no AI.
- * We generate a session plan with rules based on:
- * - task type
- * - mood
- * - energy
- * - total minutes
- */
-
-// Small helper: clamp a number between min & max
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
 
-// Convert minutes to a readable label
 function minLabel(m) {
   return `${m} min`;
 }
 
-// This is the "brain" of the app.
-// It takes user inputs and returns a plan: an array of steps.
+function formatTime(totalSeconds) {
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
 function generatePlan({ task, mood, energy, minutes }) {
   const total = clamp(Number(minutes) || 0, 10, 240);
 
-  // 1) Pick warm-up length (more anxiety = longer warm-up)
   const warmup = mood === "anxious" ? 5 : mood === "tired" ? 4 : 3;
-
-  // 2) Pick cool-down length (calm down & reflect)
   const cooldown = mood === "anxious" ? 4 : 3;
 
-  // 3) Determine focus block size based on energy + task
-  // Higher energy -> longer blocks
-  // Creative tasks can handle slightly longer flowing blocks
   let focusBlock = 25;
   if (energy === "low") focusBlock = 15;
   if (energy === "medium") focusBlock = 25;
   if (energy === "high") focusBlock = task === "creative" ? 35 : 30;
 
-  // 4) Break lengths: anxious gets more structured breathing breaks
   const shortBreak = mood === "anxious" ? 5 : 4;
   const longBreak = mood === "anxious" ? 8 : 6;
 
-  // Total minutes left after warmup + cooldown
   let remaining = total - warmup - cooldown;
 
-  // If time is very short, simplify
   if (remaining < 10) {
     return [
       {
@@ -54,7 +39,7 @@ function generatePlan({ task, mood, energy, minutes }) {
         minutes: warmup,
         prompt:
           mood === "anxious"
-            ? "Box breathing (4–4–4–4) while music ramps up."
+            ? "Box breathing (4-4-4-4) while music ramps up."
             : "Gentle ramp-in track. Set intention for the session.",
       },
       {
@@ -72,7 +57,6 @@ function generatePlan({ task, mood, energy, minutes }) {
     ];
   }
 
-  // Build plan steps
   const steps = [];
 
   steps.push({
@@ -81,16 +65,13 @@ function generatePlan({ task, mood, energy, minutes }) {
     minutes: warmup,
     prompt:
       mood === "anxious"
-        ? "Box breathing (4–4–4–4) + a steady, safe track."
+        ? "Box breathing (4-4-4-4) + a steady, safe track."
         : "Ramp-in track. Pick ONE goal for this session.",
   });
 
-  // Create repeating focus/break cycles
-  // We'll try to fit as many focus blocks as we can.
   let focusCount = 0;
 
   while (remaining > 0) {
-    // Focus block
     const thisFocus = Math.min(focusBlock, remaining);
     if (thisFocus < 8) break;
 
@@ -101,18 +82,19 @@ function generatePlan({ task, mood, energy, minutes }) {
       minutes: thisFocus,
       prompt:
         task === "studying"
-          ? "Active recall: quiz yourself, don’t just reread."
+          ? "Active recall: quiz yourself, do not just reread."
           : task === "writing"
-          ? "Draft ugly. Don’t edit yet."
+          ? "Draft first. Do not edit yet."
           : task === "creative"
-          ? "Flow mode: generate ideas fast, no judgement."
+          ? "Flow mode: generate ideas fast, no judgment."
+          : task === "mcat"
+          ? "Do practice questions, then review mistakes."
           : "One thing at a time. Finish the smallest next step.",
     });
 
     remaining -= thisFocus;
     if (remaining <= 0) break;
 
-    // Decide break length: every 3rd focus block gets a longer break
     const isLong = focusCount % 3 === 0;
     const breakLen = Math.min(isLong ? longBreak : shortBreak, remaining);
     if (breakLen < 2) break;
@@ -135,14 +117,14 @@ function generatePlan({ task, mood, energy, minutes }) {
     title: "Cool-down",
     minutes: cooldown,
     prompt:
-      task === "studying"
-        ? "Write 3 bullets: what you learned + what’s next."
-        : "Quick reflection: what did you complete and what’s next?",
+      task === "studying" || task === "mcat"
+        ? "Write 3 bullets: what you learned and what comes next."
+        : "Quick reflection: what did you complete and what comes next?",
   });
 
-  // If we have leftover minutes (because of rounding), add it to cooldown
   const planned = steps.reduce((sum, s) => sum + s.minutes, 0);
   const diff = total - planned;
+
   if (diff > 0) {
     steps[steps.length - 1] = {
       ...steps[steps.length - 1],
@@ -153,34 +135,16 @@ function generatePlan({ task, mood, energy, minutes }) {
   return steps;
 }
 
-function StepCard({ step }) {
-  const badge = step.type.toUpperCase();
+function StepCard({ step, isActive }) {
   return (
-    <div
-      style={{
-        border: "1px solid #e5e7eb",
-        borderRadius: 12,
-        padding: 14,
-        background: "white",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-        <div style={{ fontWeight: 700 }}>{step.title}</div>
-        <div
-          style={{
-            fontSize: 12,
-            padding: "4px 8px",
-            borderRadius: 999,
-            background: "#f3f4f6",
-            border: "1px solid #e5e7eb",
-          }}
-        >
-          {badge} • {minLabel(step.minutes)}
+    <div className={`step-card ${isActive ? "active-step" : ""}`}>
+      <div className="step-header">
+        <div className="step-title">{step.title}</div>
+        <div className="badge">
+          {step.type.toUpperCase()} • {minLabel(step.minutes)}
         </div>
       </div>
-      <div style={{ marginTop: 8, color: "#374151", lineHeight: 1.4 }}>
-        {step.prompt}
-      </div>
+      <div className="step-prompt">{step.prompt}</div>
     </div>
   );
 }
@@ -193,6 +157,11 @@ export default function App() {
 
   const [plan, setPlan] = useState(null);
 
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const [sessionStarted, setSessionStarted] = useState(false);
+
   const inputs = useMemo(
     () => ({ task, mood, energy, minutes }),
     [task, mood, energy, minutes]
@@ -202,176 +171,211 @@ export default function App() {
     ? plan.reduce((sum, s) => sum + s.minutes, 0)
     : 0;
 
+  const currentStep = plan ? plan[currentStepIndex] : null;
+
+  useEffect(() => {
+    if (!isRunning || !sessionStarted || !currentStep) return;
+
+    const interval = setInterval(() => {
+      setSecondsLeft((prev) => {
+        if (prev > 1) {
+          return prev - 1;
+        }
+
+        if (currentStepIndex < plan.length - 1) {
+          setCurrentStepIndex((prevIndex) => prevIndex + 1);
+          return plan[currentStepIndex + 1].minutes * 60;
+        }
+
+        setIsRunning(false);
+        return 0;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isRunning, sessionStarted, currentStep, currentStepIndex, plan]);
+
+  function handleGeneratePlan() {
+    const newPlan = generatePlan(inputs);
+    setPlan(newPlan);
+    setCurrentStepIndex(0);
+    setSessionStarted(false);
+    setIsRunning(false);
+    setSecondsLeft(0);
+  }
+
+  function handleStartSession() {
+    if (!plan || plan.length === 0) return;
+
+    setSessionStarted(true);
+    setCurrentStepIndex(0);
+    setSecondsLeft(plan[0].minutes * 60);
+    setIsRunning(true);
+  }
+
+  function handlePauseResume() {
+    setIsRunning((prev) => !prev);
+  }
+
+  function handleResetSession() {
+    if (!plan || plan.length === 0) return;
+
+    setSessionStarted(false);
+    setIsRunning(false);
+    setCurrentStepIndex(0);
+    setSecondsLeft(0);
+  }
+
+  function handleNextStep() {
+    if (!plan) return;
+
+    if (currentStepIndex < plan.length - 1) {
+      const nextIndex = currentStepIndex + 1;
+      setCurrentStepIndex(nextIndex);
+      setSecondsLeft(plan[nextIndex].minutes * 60);
+    } else {
+      setIsRunning(false);
+      setSecondsLeft(0);
+    }
+  }
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f9fafb",
-        padding: 18,
-        fontFamily:
-          'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial',
-      }}
-    >
-      <div style={{ maxWidth: 920, margin: "0 auto" }}>
-        <header style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 14, color: "#6b7280" }}>NeuroSciTunes</div>
-          <h1 style={{ margin: "6px 0 0", fontSize: 28 }}>NeuroMix</h1>
-          <p style={{ marginTop: 8, color: "#374151", lineHeight: 1.5 }}>
-            Tell me your task, mood, energy, and time. I’ll generate a guided
-            session plan: warm-up → focus → breaks → cool-down.
-          </p>
-        </header>
+    <div className="container">
+      <header className="page-header">
+        <div className="eyebrow">NeuroSciTunes</div>
+        <h1>NeuroMix</h1>
+        <p className="subtitle">
+          Build a guided focus session based on mood, energy, task, and time.
+        </p>
+      </header>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr",
-            gap: 16,
-          }}
-        >
-          <div
-            style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: 14,
-              padding: 16,
-              background: "white",
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: 16 }}>Inputs</h2>
+      <div className="card">
+        <h2>Inputs</h2>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                gap: 12,
-                marginTop: 12,
-              }}
-            >
-              <label style={{ display: "grid", gap: 6, fontSize: 14 }}>
-                Task
-                <select
-                  value={task}
-                  onChange={(e) => setTask(e.target.value)}
-                  style={{ padding: 10, borderRadius: 10 }}
-                >
-                  <option value="studying">Studying</option>
-                  <option value="writing">Writing</option>
-                  <option value="creative">Creative</option>
-                  <option value="admin">Admin / chores</option>
-                </select>
-              </label>
+        <div className="form-grid">
+          <label>
+            <span>Task</span>
+            <select value={task} onChange={(e) => setTask(e.target.value)}>
+              <option value="studying">Studying</option>
+              <option value="writing">Writing</option>
+              <option value="creative">Creative</option>
+              <option value="admin">Admin / chores</option>
+              <option value="mcat">MCAT</option>
+            </select>
+          </label>
 
-              <label style={{ display: "grid", gap: 6, fontSize: 14 }}>
-                Mood
-                <select
-                  value={mood}
-                  onChange={(e) => setMood(e.target.value)}
-                  style={{ padding: 10, borderRadius: 10 }}
-                >
-                  <option value="anxious">Anxious</option>
-                  <option value="neutral">Neutral</option>
-                  <option value="tired">Tired</option>
-                  <option value="motivated">Motivated</option>
-                </select>
-              </label>
+          <label>
+            <span>Mood</span>
+            <select value={mood} onChange={(e) => setMood(e.target.value)}>
+              <option value="anxious">Anxious</option>
+              <option value="neutral">Neutral</option>
+              <option value="tired">Tired</option>
+              <option value="motivated">Motivated</option>
+            </select>
+          </label>
 
-              <label style={{ display: "grid", gap: 6, fontSize: 14 }}>
-                Energy
-                <select
-                  value={energy}
-                  onChange={(e) => setEnergy(e.target.value)}
-                  style={{ padding: 10, borderRadius: 10 }}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </label>
+          <label>
+            <span>Energy</span>
+            <select value={energy} onChange={(e) => setEnergy(e.target.value)}>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
 
-              <label style={{ display: "grid", gap: 6, fontSize: 14 }}>
-                Minutes (10–240)
-                <input
-                  type="number"
-                  min={10}
-                  max={240}
-                  value={minutes}
-                  onChange={(e) => setMinutes(e.target.value)}
-                  style={{ padding: 10, borderRadius: 10, border: "1px solid #e5e7eb" }}
-                />
-              </label>
-            </div>
-
-            <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
-              <button
-                onClick={() => setPlan(generatePlan(inputs))}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #111827",
-                  background: "#111827",
-                  color: "white",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
-              >
-                Generate Plan
-              </button>
-
-              <button
-                onClick={() => setPlan(null)}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  border: "1px solid #e5e7eb",
-                  background: "white",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                }}
-              >
-                Clear
-              </button>
-
-              <div style={{ color: "#6b7280", fontSize: 13, alignSelf: "center" }}>
-                Current inputs: {task}, {mood}, {energy}, {minutes} minutes
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h2 style={{ margin: "6px 0 10px", fontSize: 16 }}>Session Plan</h2>
-
-            {!plan ? (
-              <div
-                style={{
-                  border: "1px dashed #d1d5db",
-                  borderRadius: 14,
-                  padding: 16,
-                  color: "#6b7280",
-                  background: "white",
-                }}
-              >
-                Generate a plan to see your warm-up, focus blocks, breaks, and
-                cool-down here.
-              </div>
-            ) : (
-              <div style={{ display: "grid", gap: 12 }}>
-                <div style={{ color: "#374151", fontSize: 14 }}>
-                  Total planned: <b>{totalPlanned} minutes</b>
-                </div>
-
-                {plan.map((step, idx) => (
-                  <StepCard key={idx} step={step} />
-                ))}
-              </div>
-            )}
-          </div>
+          <label>
+            <span>Minutes (10-240)</span>
+            <input
+              type="number"
+              min={10}
+              max={240}
+              value={minutes}
+              onChange={(e) => setMinutes(e.target.value)}
+            />
+          </label>
         </div>
 
-        <footer style={{ marginTop: 24, color: "#6b7280", fontSize: 12 }}>
-          v1 uses simple rules (not AI). Next step: add a “Start Session” timer
-          and optional Spotify / audio integration.
-        </footer>
+        <div className="button-row">
+          <button className="primary" onClick={handleGeneratePlan}>
+            Generate Plan
+          </button>
+          <button
+            className="secondary"
+            onClick={() => {
+              setPlan(null);
+              setSessionStarted(false);
+              setIsRunning(false);
+              setCurrentStepIndex(0);
+              setSecondsLeft(0);
+            }}
+          >
+            Clear
+          </button>
+        </div>
       </div>
+
+      <div className="card">
+        <h2>Session Plan</h2>
+
+        {!plan ? (
+          <p className="empty-text">
+            Generate a plan to see your warm-up, focus blocks, breaks, and cool-down.
+          </p>
+        ) : (
+          <>
+            <p className="summary-text">
+              Total planned: <strong>{totalPlanned} minutes</strong>
+            </p>
+
+            <div className="step-list">
+              {plan.map((step, index) => (
+                <StepCard
+                  key={index}
+                  step={step}
+                  isActive={sessionStarted && index === currentStepIndex}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {plan && (
+        <div className="card">
+          <h2>Session Runner</h2>
+
+          {!sessionStarted ? (
+            <div className="runner-box">
+              <p>Your plan is ready.</p>
+              <button className="primary" onClick={handleStartSession}>
+                Start Session
+              </button>
+            </div>
+          ) : (
+            <div className="runner-box">
+              <div className="current-step-label">Current Step</div>
+              <div className="current-step-title">
+                {currentStep ? currentStep.title : "Session Complete"}
+              </div>
+              <div className="timer">{formatTime(secondsLeft)}</div>
+
+              {currentStep && <p className="runner-prompt">{currentStep.prompt}</p>}
+
+              <div className="button-row">
+                <button className="primary" onClick={handlePauseResume}>
+                  {isRunning ? "Pause" : "Resume"}
+                </button>
+                <button className="secondary" onClick={handleNextStep}>
+                  Next Step
+                </button>
+                <button className="secondary" onClick={handleResetSession}>
+                  Reset
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
