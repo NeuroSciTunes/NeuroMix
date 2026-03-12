@@ -522,25 +522,6 @@ button.secondary {
   line-height: 1.6;
 }
 
-.sound-source {
-  margin-top: 8px;
-  font-size: 0.9rem;
-  color: var(--purple);
-  font-weight: 700;
-}
-
-.sound-link {
-  display: inline-block;
-  margin-top: 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--blue), var(--purple));
-  color: white;
-  text-decoration: none;
-  font-weight: 700;
-  box-shadow: 0 8px 20px rgba(90, 88, 255, 0.22);
-}
-
 .completed-banner,
 .favorited-banner {
   padding: 12px 14px;
@@ -597,4 +578,10 @@ button.secondary {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+  .audio-player {
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 12px;
 }

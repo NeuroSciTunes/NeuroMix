@@ -4,6 +4,7 @@ import "./App.css";
 import warmupAmbient from "./assets/warmup_ambient.mp3";
 import focusFlow from "./assets/focus_flow.mp3";
 import deepFocus from "./assets/deep_focus.mp3";
+import breakReset from "./assets/break_reset.mp3";
 import calmReset from "./assets/calm_reset.mp3";
 import cooldownPiano from "./assets/cooldown_piano.mp3";
 
@@ -58,367 +59,104 @@ function getTotalFocusMinutes(completedSessions) {
   }, 0);
 }
 
-function getSoundForStep({ stepType, mode, mood, task, text }) {
-  if (stepType === "warmup") {
-    if (mode === "recovery") {
+  function getSoundForStep({ stepType, mode, mood, task, text }) {
+    if (stepType === "warmup") {
+      if (mode === "recovery") {
+        return {
+          soundTitle: "Soft Reset Soundscape",
+          soundDescription:
+            "Slow ambient textures with gentle movement to help your nervous system settle.",
+          audioFile: calmReset,
+        };
+      }
+
+      if (mood === "anxious" || text.includes("overwhelmed")) {
+        return {
+          soundTitle: "Steady Ambient Pad",
+          soundDescription:
+            "Minimal, stable sound with no sharp transitions so your mind can downshift safely.",
+          audioFile: warmupAmbient,
+        };
+      }
+
       return {
-        soundTitle: "Soft Reset Soundscape",
+        soundTitle: "Focus Warm-Up Track",
         soundDescription:
-          "Slow ambient textures with gentle movement to help your nervous system settle.",
-        soundSource: "YouTube",
-        soundLink:
-          "https://www.youtube.com/results?search_query=ambient+relaxation+music+for+anxiety",
+          "Light instrumental audio that helps you transition into work without overstimulation.",
+        audioFile: warmupAmbient,
       };
     }
 
-    if (mood === "anxious" || text.includes("overwhelmed")) {
+    if (stepType === "focus") {
+      if (task === "creative") {
+        return {
+          soundTitle: "Flow-State Instrumental",
+          soundDescription:
+            "Melodic but non-distracting audio that supports ideation and sustained creative momentum.",
+          audioFile: focusFlow,
+        };
+      }
+
+      if (task === "mcat" || text.includes("exam") || text.includes("test")) {
+        return {
+          soundTitle: "Precision Focus Pulse",
+          soundDescription:
+            "Tight, low-distraction sound designed for problem solving and practice-question intensity.",
+          audioFile: deepFocus,
+        };
+      }
+
+      if (mode === "deepwork") {
+        return {
+          soundTitle: "Deep Work Drone",
+          soundDescription:
+            "Long-form minimal audio with almost no variation to protect deep cognitive effort.",
+          audioFile: deepFocus,
+        };
+      }
+
+      if (mode === "gentle") {
+        return {
+          soundTitle: "Low-Pressure Focus Bed",
+          soundDescription:
+            "Soft instrumental texture that supports concentration without feeling harsh or intense.",
+          audioFile: focusFlow,
+        };
+      }
+
       return {
-        soundTitle: "Steady Ambient Pad",
+        soundTitle: "Low-Distraction Instrumental",
         soundDescription:
-          "Minimal, stable sound with no sharp transitions so your mind can downshift safely.",
-        soundSource: "YouTube",
-        soundLink:
-          "https://www.youtube.com/results?search_query=calming+ambient+music+for+focus",
+          "Steady background sound with no lyrical pull, built to reduce mental fragmentation.",
+        audioFile: focusFlow,
       };
     }
 
-    if (mode === "lockin") {
+    if (stepType === "break") {
+      if (mode === "recovery") {
+        return {
+          soundTitle: "Long Exhale Reset",
+          soundDescription:
+            "Breathing-friendly audio with more space, ideal for releasing tension between blocks.",
+          audioFile: calmReset,
+        };
+      }
+
       return {
-        soundTitle: "Intentional Ramp-In",
+        soundTitle: "Breathing Reset Soundscape",
         soundDescription:
-          "A subtle build that signals your brain it’s time to narrow attention.",
-        soundSource: "Spotify",
-        soundLink: "https://open.spotify.com/search/focus%20instrumental",
+          "A short decompression cue for stepping away, resetting, and avoiding doom scrolling.",
+        audioFile: breakReset,
       };
     }
 
     return {
-      soundTitle: "Focus Warm-Up Track",
+      soundTitle: "Soft Reflection Piano",
       soundDescription:
-        "Light instrumental audio that helps you transition into work without overstimulation.",
-      soundSource: "Spotify",
-      soundLink: "https://open.spotify.com/search/ambient%20focus",
+        "Gentle closing audio to help you review what you completed and exit the session cleanly.",
+      audioFile: cooldownPiano,
     };
   }
-
-  if (stepType === "focus") {
-    if (task === "creative") {
-      return {
-        soundTitle: "Flow-State Instrumental",
-        soundDescription:
-          "Melodic but non-distracting audio that supports ideation and sustained creative momentum.",
-        soundSource: "Spotify",
-        soundLink:
-          "https://open.spotify.com/search/creative%20focus%20instrumental",
-      };
-    }
-
-    if (task === "mcat" || text.includes("exam") || text.includes("test")) {
-      return {
-        soundTitle: "Precision Focus Pulse",
-        soundDescription:
-          "Tight, low-distraction sound designed for problem solving and practice-question intensity.",
-        soundSource: "Spotify",
-        soundLink: "https://open.spotify.com/search/deep%20focus%20instrumental",
-      };
-    }
-
-    if (mode === "deepwork") {
-      return {
-        soundTitle: "Deep Work Drone",
-        soundDescription:
-          "Long-form minimal audio with almost no variation to protect deep cognitive effort.",
-        soundSource: "YouTube",
-        soundLink:
-          "https://www.youtube.com/results?search_query=deep+work+music+no+lyrics",
-      };
-    }
-
-    if (mode === "gentle") {
-      return {
-        soundTitle: "Low-Pressure Focus Bed",
-        soundDescription:
-          "Soft instrumental texture that supports concentration without feeling harsh or intense.",
-        soundSource: "Spotify",
-        soundLink: "https://open.spotify.com/search/lofi%20study%20beats",
-      };
-    }
-
-    return {
-      soundTitle: "Low-Distraction Instrumental",
-      soundDescription:
-        "Steady background sound with no lyrical pull, built to reduce mental fragmentation.",
-      soundSource: "Spotify",
-      soundLink: "https://open.spotify.com/search/focus%20music",
-    };
-  }
-
-  if (stepType === "break") {
-    if (mode === "recovery") {
-      return {
-        soundTitle: "Long Exhale Reset",
-        soundDescription:
-          "Breathing-friendly audio with more space, ideal for releasing tension between blocks.",
-        soundSource: "YouTube",
-        soundLink:
-          "https://www.youtube.com/results?search_query=breathing+exercise+music+relaxing",
-      };
-    }
-
-    return {
-      soundTitle: "Breathing Reset Soundscape",
-      soundDescription:
-        "A short decompression cue for stepping away, resetting, and avoiding doom scrolling.",
-      soundSource: "YouTube",
-      soundLink:
-        "https://www.youtube.com/results?search_query=5+minute+breathing+music",
-      };
-  }
-
-  return {
-    soundTitle: "Soft Reflection Piano",
-    soundDescription:
-      "Gentle closing audio to help you review what you completed and exit the session cleanly.",
-    soundSource: "Spotify",
-    soundLink: "https://open.spotify.com/search/peaceful%20piano",
-  };
-}
-
-function generatePlan({ task, mood, energy, minutes, situation, mode }) {
-  const total = clamp(Number(minutes) || 0, 10, 240);
-  const text = (situation || "").toLowerCase();
-
-  let warmup =
-    mood === "anxious" || text.includes("overwhelmed")
-      ? 5
-      : mood === "tired"
-      ? 4
-      : 3;
-
-  let cooldown = mood === "anxious" ? 4 : 3;
-
-  let focusBlock = 25;
-  if (energy === "low") focusBlock = 15;
-  if (energy === "medium") focusBlock = 25;
-  if (energy === "high") {
-    focusBlock = task === "creative" ? 35 : task === "mcat" ? 35 : 30;
-  }
-
-  let shortBreak = mood === "anxious" ? 5 : 4;
-  let longBreak = mood === "anxious" ? 8 : 6;
-
-  if (text.includes("overwhelmed")) {
-    focusBlock = Math.min(focusBlock, 20);
-  }
-
-  if (text.includes("exam") || text.includes("mcat") || text.includes("test")) {
-    focusBlock = Math.max(focusBlock, 25);
-  }
-
-  if (mode === "lockin") {
-    focusBlock += 5;
-    shortBreak = Math.max(3, shortBreak - 1);
-    longBreak = Math.max(5, longBreak - 1);
-  }
-
-  if (mode === "gentle") {
-    warmup += 2;
-    focusBlock = Math.min(focusBlock, 20);
-    shortBreak += 1;
-  }
-
-  if (mode === "deepwork") {
-    focusBlock += 10;
-    shortBreak = Math.max(3, shortBreak - 1);
-    longBreak = Math.max(5, longBreak - 1);
-  }
-
-  if (mode === "recovery") {
-    warmup += 2;
-    cooldown += 2;
-    focusBlock = Math.min(focusBlock, 15);
-    shortBreak += 2;
-    longBreak += 2;
-  }
-
-  focusBlock = clamp(focusBlock, 10, 50);
-  shortBreak = clamp(shortBreak, 3, 10);
-  longBreak = clamp(longBreak, 5, 15);
-
-  let remaining = total - warmup - cooldown;
-  const steps = [];
-
-  let warmupPrompt = "Use a ramp-in track and define the single goal of this session.";
-
-  if (text.includes("overwhelmed")) {
-    warmupPrompt =
-      "Take a slow ramp-in. Breathe, lower the pressure, and choose one tiny first step.";
-  } else if (mood === "anxious") {
-    warmupPrompt = "Use box breathing and a steady track to settle your mind.";
-  }
-
-  if (mode === "gentle") {
-    warmupPrompt += " Keep this session easy to enter. The goal is simply to begin.";
-  }
-
-  if (mode === "lockin") {
-    warmupPrompt += " Strip away distractions and commit to one target.";
-  }
-
-  if (mode === "recovery") {
-    warmupPrompt += " Give yourself permission to move slowly and reset.";
-  }
-
-  steps.push({
-    type: "warmup",
-    title: "Warm-up",
-    minutes: warmup,
-    prompt: warmupPrompt,
-    ...getSoundForStep({ stepType: "warmup", mode, mood, task, text }),
-  });
-
-  if (remaining < 10) {
-    steps.push({
-      type: "focus",
-      title: "Focus Sprint",
-      minutes: Math.max(1, remaining),
-      prompt: "Choose one small clear goal. No multitasking.",
-      ...getSoundForStep({ stepType: "focus", mode, mood, task, text }),
-    });
-
-    steps.push({
-      type: "cooldown",
-      title: "Cool-down",
-      minutes: cooldown,
-      prompt: "Reflect on what moved forward and what comes next.",
-      ...getSoundForStep({ stepType: "cooldown", mode, mood, task, text }),
-    });
-
-    return steps;
-  }
-
-  let focusCount = 0;
-
-  while (remaining > 0) {
-    const thisFocus = Math.min(focusBlock, remaining);
-    if (thisFocus < 8) break;
-
-    focusCount += 1;
-
-    let focusPrompt = "Do one thing at a time and finish the smallest next step.";
-
-    if (task === "studying") {
-      focusPrompt = "Use active recall. Quiz yourself instead of rereading.";
-    } else if (task === "writing") {
-      focusPrompt = "Draft first. Edit later.";
-    } else if (task === "creative") {
-      focusPrompt = "Stay in flow mode. Generate ideas without judging them.";
-    } else if (task === "mcat") {
-      focusPrompt = "Do practice questions, then review what you got wrong.";
-    }
-
-    if (text.includes("biochem")) {
-      focusPrompt += " Focus on mechanisms, pathways, and testing yourself out loud.";
-    }
-
-    if (text.includes("paper") || text.includes("essay")) {
-      focusPrompt += " Prioritize forward momentum over perfect wording.";
-    }
-
-    if (text.includes("overwhelmed")) {
-      focusPrompt += " Keep the bar low: just complete this block.";
-    }
-
-    if (mode === "lockin") {
-      focusPrompt += " Stay strict. No app switching and no passive drifting.";
-    }
-
-    if (mode === "deepwork") {
-      focusPrompt += " Protect depth. Avoid interruptions and stay with the problem longer.";
-    }
-
-    if (mode === "gentle") {
-      focusPrompt += " Do not chase perfection. Just create momentum.";
-    }
-
-    if (mode === "recovery") {
-      focusPrompt += " Work softly. The goal is progress without burning out.";
-    }
-
-    steps.push({
-      type: "focus",
-      title: `Focus Block ${focusCount}`,
-      minutes: thisFocus,
-      prompt: focusPrompt,
-      ...getSoundForStep({ stepType: "focus", mode, mood, task, text }),
-    });
-
-    remaining -= thisFocus;
-    if (remaining <= 0) break;
-
-    const isLong = focusCount % 3 === 0;
-    const breakLen = Math.min(isLong ? longBreak : shortBreak, remaining);
-    if (breakLen < 2) break;
-
-    let breakPrompt =
-      mood === "anxious" || text.includes("overwhelmed")
-        ? "Do a breathing reset. Inhale for 4, exhale for 6. No scrolling."
-        : "Stand up, drink water, and stretch. No scrolling.";
-
-    if (mode === "lockin") {
-      breakPrompt =
-        "Reset quickly. Move, breathe, and get back in without opening distracting apps.";
-    }
-
-    if (mode === "deepwork") {
-      breakPrompt = "Keep the break clean and brief. Protect your mental momentum.";
-    }
-
-    if (mode === "recovery") {
-      breakPrompt =
-        "Take a fuller reset. Breathe, unclench, stretch, and let your system settle.";
-    }
-
-    steps.push({
-      type: "break",
-      title: isLong ? "Long Break" : "Short Break",
-      minutes: breakLen,
-      prompt: breakPrompt,
-      ...getSoundForStep({ stepType: "break", mode, mood, task, text }),
-    });
-
-    remaining -= breakLen;
-  }
-
-  let cooldownPrompt =
-    task === "studying" || task === "mcat"
-      ? "Write 3 bullets: what you learned and what to do next."
-      : "Reflect on what you finished and what your next step is.";
-
-  if (text.includes("overwhelmed")) {
-    cooldownPrompt =
-      "Acknowledge what you completed. Shrink the next step so it feels easy to restart later.";
-  }
-
-  if (mode === "lockin") {
-    cooldownPrompt += " Note exactly where you’ll resume next time.";
-  }
-
-  if (mode === "gentle") {
-    cooldownPrompt += " Give yourself credit for starting.";
-  }
-
-  if (mode === "recovery") {
-    cooldownPrompt += " End softly and avoid immediately jumping into more stress.";
-  }
-
-  steps.push({
-    type: "cooldown",
-    title: "Cool-down",
-    minutes: cooldown,
-    prompt: cooldownPrompt,
-    ...getSoundForStep({ stepType: "cooldown", mode, mood, task, text }),
-  });
 
   const planned = steps.reduce((sum, s) => sum + s.minutes, 0);
   const diff = total - planned;
@@ -1285,23 +1023,22 @@ export default function App() {
                     <p className="runner-prompt">{currentStep.prompt}</p>
 
                     <div className="sound-card">
-                      <div className="sound-label">Sound Recommendation</div>
+                      <div className="sound-label">Now Playing</div>
                       <div className="sound-title">{currentStep.soundTitle}</div>
                       <div className="sound-description">
                         {currentStep.soundDescription}
                       </div>
-                      <div className="sound-source">
-                        Source: {currentStep.soundSource}
-                      </div>
 
-                      <a
-                        className="sound-link"
-                        href={currentStep.soundLink}
-                        target="_blank"
-                        rel="noreferrer"
+                      <audio
+                        className="audio-player"
+                        controls
+                        loop
+                        autoPlay
+                        key={currentStepIndex}
                       >
-                        Open Sound
-                      </a>
+                        <source src={currentStep.audioFile} type="audio/mpeg" />
+                        Your browser does not support the audio element.
+                      </audio>
                     </div>
                   </>
                 )}
