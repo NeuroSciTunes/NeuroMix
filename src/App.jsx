@@ -1299,6 +1299,8 @@ export default function App() {
       mode,
       modeLabel: modeOptions[mode].label,
       situation,
+      selectedTemplateId,
+      templateName: selectedTemplate?.name || null,
       plan,
     };
   }
