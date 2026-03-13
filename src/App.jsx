@@ -1638,7 +1638,7 @@ export default function App() {
                   <button
                     key={template.id}
                     type="button"
-                    className="template-card"
+                    className={`template-card ${selectedTemplateId === template.id ? "template-card-active" : ""}`}
                     onClick={() => handleApplyTemplate(template)}
                   >
                     <div className="template-card-title">{template.name}</div>
@@ -1775,6 +1775,12 @@ export default function App() {
                 ? `Situation: ${situation}`
                 : "Add a situation to make your session plan feel more personal and context-aware."}
             </p>
+
+            {selectedTemplate && (
+              <p className="mini-text" style={{ marginTop: 12 }}>
+                Template: <strong>{selectedTemplate.name}</strong>
+              </p>
+            )}
 
             {showPresetBanner && (
               <div className="favorited-banner" style={{ marginTop: 14 }}>
