@@ -1397,6 +1397,16 @@ export default function App() {
     });
   }
 
+  function handleApplyTemplate(template) {
+    setTask(template.task);
+    setMood(template.mood);
+    setEnergy(template.energy);
+    setMinutes(template.minutes);
+    setMode(template.mode);
+    setSituation(template.situation);
+    setShowPresetBanner(false);
+  }
+
   function handleAddStep(stepType) {
     const newStep = createStepTemplate(
       stepType,
