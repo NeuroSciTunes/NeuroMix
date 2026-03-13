@@ -905,6 +905,7 @@ export default function App() {
 
   const [editingIndex, setEditingIndex] = useState(null);
   const [draftStep, setDraftStep] = useState(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
 
   const audioRef = useRef(null);
 
@@ -1292,6 +1293,7 @@ export default function App() {
   function handleClear() {
     setPlan(null);
     setSituation("");
+    setSelectedTemplateId(null);
     setSessionStarted(false);
     setIsRunning(false);
     setCurrentStepIndex(0);
@@ -1412,6 +1414,7 @@ export default function App() {
     setMinutes(template.minutes);
     setMode(template.mode);
     setSituation(template.situation);
+    setSelectedTemplateId(template.id);
     setShowPresetBanner(false);
   }
 
