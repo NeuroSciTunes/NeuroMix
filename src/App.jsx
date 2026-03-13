@@ -479,6 +479,22 @@ function generatePlan({ task, mood, energy, minutes, situation, mode, planStyle 
       focusPrompt = "Do practice questions, then review what you got wrong.";
     }
 
+    if (planStyle === "cars") {
+      focusPrompt = "Read actively, stay present with the passage, and avoid rushing ahead.";
+    } else if (planStyle === "mcatProblemSolving") {
+      focusPrompt = "Work through each question carefully, then review the logic behind every answer choice.";
+    } else if (planStyle === "activeRecall") {
+      focusPrompt = "Test yourself out loud, retrieve from memory, and only then check your notes.";
+    } else if (planStyle === "memorization") {
+      focusPrompt = "Keep the pace light and consistent. Prioritize recall over rereading.";
+    } else if (planStyle === "reviewMistakes") {
+      focusPrompt = "Review missed questions calmly. Focus on why the right answer is right and why your original choice was wrong.";
+    } else if (planStyle === "writing") {
+      focusPrompt = "Keep drafting. Do not stop to perfect sentences while momentum is building.";
+    } else if (planStyle === "overwhelmedReset") {
+      focusPrompt = "Choose one tiny task and finish only that. The goal is to re-enter, not be perfect.";
+    }
+
     if (text.includes("biochem")) {
       focusPrompt += " Focus on mechanisms, pathways, and testing yourself out loud.";
     }
@@ -575,6 +591,31 @@ function generatePlan({ task, mood, energy, minutes, situation, mode, planStyle 
 
   if (mode === "recovery") {
     cooldownPrompt += " End softly and avoid immediately jumping into more stress.";
+  }
+
+  if (planStyle === "reviewMistakes") {
+    cooldownPrompt =
+      "Write down the patterns behind your mistakes and one thing you will watch for next time.";
+  }
+
+  if (planStyle === "cars") {
+    cooldownPrompt =
+      "Note what pulled your attention away and what helped you stay engaged with the passage.";
+  }
+
+  if (planStyle === "memorization") {
+    cooldownPrompt =
+      "List the terms or concepts that still feel weak so your next review session starts cleanly.";
+  }
+
+  if (planStyle === "writing") {
+    cooldownPrompt =
+      "Write the exact next sentence, paragraph, or section you should begin with next time.";
+  }
+
+  if (planStyle === "overwhelmedReset") {
+    cooldownPrompt =
+      "Acknowledge that you started. Make the next entry point feel as small and easy as possible.";
   }
 
   steps.push({
