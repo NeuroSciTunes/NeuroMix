@@ -1242,13 +1242,18 @@ export default function App() {
   }
 
   function handleLoadSession(session) {
+    const migratedPlan = (session.plan || []).map((step) =>
+      step.id ? step : { ...step, id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` }
+    );
+
     setTask(session.task);
     setMood(session.mood);
     setEnergy(session.energy);
     setMinutes(session.minutes);
     setSituation(session.situation || "");
     setMode(session.mode || "lockin");
-    setPlan(session.plan || null);
+    setPlan(migratedPlan);
+    setSelectedTemplateId(session.selectedTemplateId || null);
     setCurrentStepIndex(0);
     setSessionStarted(false);
     setIsRunning(false);
