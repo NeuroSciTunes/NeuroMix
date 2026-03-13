@@ -1891,6 +1891,34 @@ export default function App() {
               </p>
             )}
 
+            <div className="recommendation-card">
+              <div className="recommendation-label">Neuro Recommendation</div>
+              <div className="recommendation-main">
+                Try <strong>{recommendedMinutes} minutes</strong>
+                {recommendedMode ? (
+                  <>
+                    {" "}in <strong>{modeOptions[recommendedMode].label}</strong>
+                  </>
+                ) : null}
+              </div>
+
+              <p className="mini-text" style={{ marginTop: 8 }}>
+                {recommendationReason}
+              </p>
+
+              {completedSessions.length > 0 && (
+                <p className="mini-text" style={{ marginTop: 8 }}>
+                  Average completed session length: <strong>{averageCompletedMinutes} min</strong>
+                </p>
+              )}
+
+              <div className="button-row compact-row" style={{ marginTop: 12 }}>
+                <button className="secondary" onClick={handleApplyRecommendation}>
+                  Apply Recommendation
+                </button>
+              </div>
+            </div>
+
             {showPresetBanner && (
               <div className="favorited-banner" style={{ marginTop: 14 }}>
                 Preset saved.
