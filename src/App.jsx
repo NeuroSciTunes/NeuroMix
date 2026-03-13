@@ -845,13 +845,16 @@ export default function App() {
     ? Number(currentStep.minutes || 0) * 60
     : 0;
 
+  const elapsedInCurrentStep = sessionStarted
+    ? Math.max(0, currentStepTotalSeconds - secondsLeft)
+    : 0;
+
   const progressPercent =
     totalSessionSeconds > 0
       ? Math.min(
           100,
           Math.round(
-            ((secondsCompletedBeforeCurrent +
-              (currentStepTotalSeconds - secondsLeft)) /
+            ((secondsCompletedBeforeCurrent + elapsedInCurrentStep) /
               totalSessionSeconds) *
               100
           )
