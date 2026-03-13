@@ -1146,6 +1146,24 @@ export default function App() {
   const sessionsToday = getSessionsToday(completedSessions);
   const last7Days = getLast7DaysData(completedSessions);
 
+  const averageCompletedMinutes = getAverageCompletedMinutes(completedSessions);
+
+  const recommendedMinutes = getRecommendedMinutes(
+    completedSessions,
+    task,
+    mood,
+    energy
+  );
+
+  const recommendedMode = getRecommendedMode(completedSessions, task);
+
+  const recommendationReason = getRecommendationReason(
+    completedSessions,
+    task,
+    mood,
+    energy
+  );
+
   useEffect(() => {
     const savedInputs = localStorage.getItem("neuromix_inputs");
     const savedPlan = localStorage.getItem("neuromix_plan");
@@ -1585,6 +1603,14 @@ export default function App() {
       const newIndex = prev.findIndex((step) => step.id === over.id);
       return arrayMove(prev, oldIndex, newIndex);
     });
+  }
+
+  function handleApplyRecommendation() {
+    setMinutes(recommendedMinutes);
+
+    if (recommendedMode) {
+      setMode(recommendedMode);
+    }
   }
 
   function handleApplyTemplate(template) {
