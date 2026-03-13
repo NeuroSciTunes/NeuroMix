@@ -1652,21 +1652,40 @@ export default function App() {
                 </p>
               )}
 
-              <div className="step-list">
-                {plan.map((step, index) => (
-                  <StepCard
-                    key={index}
-                    step={editingIndex === index ? draftStep : step}
-                    isActive={sessionStarted && index === currentStepIndex}
-                    isEditing={editingIndex === index}
-                    onEdit={() => handleEditStep(index)}
-                    onDelete={() => handleDeleteStep(index)}
-                    onFieldChange={handleStepFieldChange}
-                    onSave={handleSaveStep}
-                    onCancel={handleCancelEdit}
-                  />
-                ))}
-              </div>
+              <DndContext
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+
+                <SortableContext
+                  items={plan.map((_,i)=>i.toString())}
+                  strategy={verticalListSortingStrategy}
+                >
+
+                  <div className="step-list">
+
+                    {plan.map((step,index)=>(
+                      <SortableStepCard
+                        key={index}
+                        id={index.toString()}
+                        step={editingIndex===index?draftStep:step}
+                        isActive={sessionStarted && index===currentStepIndex}
+                        isEditing={editingIndex===index}
+
+                        onEdit={()=>handleEditStep(index)}
+                        onDelete={()=>handleDeleteStep(index)}
+
+                        onFieldChange={handleStepFieldChange}
+                        onSave={handleSaveStep}
+                        onCancel={handleCancelEdit}
+                      />
+                    ))}
+
+                  </div>
+
+                </SortableContext>
+
+              </DndContext>
             </>
           )}
         </section>
