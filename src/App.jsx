@@ -933,6 +933,11 @@ export default function App() {
     [task, mood, energy, minutes, situation, mode]
   );
 
+  const selectedTemplate = useMemo(
+    () => studyTemplates.find((template) => template.id === selectedTemplateId) || null,
+    [selectedTemplateId]
+  );
+
   const totalPlanned = plan
     ? plan.reduce((sum, s) => sum + Number(s.minutes || 0), 0)
     : 0;
