@@ -268,6 +268,14 @@ textarea.situation-box:focus {
   box-shadow: 0 0 0 3px rgba(122, 66, 255, 0.12);
 }
 
+.preset-builder {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #f8f9ff;
+  border: 1px solid #e6eaff;
+}
+
 .button-row,
 .section-row {
   display: flex;
@@ -280,6 +288,13 @@ textarea.situation-box:focus {
 
 .compact-row {
   justify-content: flex-start;
+}
+
+.add-step-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 button {
@@ -336,7 +351,8 @@ button.secondary {
 
 .step-card,
 .recent-card,
-.favorite-card {
+.favorite-card,
+.preset-card {
   border: 1px solid #e4e8ff;
   border-radius: 18px;
   padding: 15px;
@@ -347,6 +363,11 @@ button.secondary {
 .favorite-card {
   border-color: #ffe1ad;
   background: linear-gradient(180deg, #ffffff 0%, #fffaf0 100%);
+}
+
+.preset-card {
+  border-color: #d7dcff;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f8ff 100%);
 }
 
 .active-step {
@@ -415,13 +436,8 @@ button.secondary {
 }
 
 .edit-panel {
-  margin-top: 14px;
   display: grid;
   gap: 12px;
-  padding: 14px;
-  border-radius: 16px;
-  background: #f8f9ff;
-  border: 1px solid #e6eaff;
 }
 
 .runner-box {
@@ -473,6 +489,14 @@ button.secondary {
   margin-top: 10px;
 }
 
+.four-up {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.two-up {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .stat-box {
   border-radius: 16px;
   padding: 14px;
@@ -491,6 +515,54 @@ button.secondary {
   font-weight: 800;
   color: var(--dark);
   text-transform: capitalize;
+}
+
+.activity-strip {
+  margin-top: 16px;
+}
+
+.activity-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.activity-day {
+  padding: 12px 8px;
+  border-radius: 14px;
+  background: #f8f9ff;
+  border: 1px solid #e3e8ff;
+  text-align: center;
+}
+
+.active-day {
+  background: linear-gradient(180deg, #f4efff 0%, #ebe4ff 100%);
+  border-color: #d9c9ff;
+}
+
+.today-day {
+  outline: 2px solid var(--purple);
+  outline-offset: 1px;
+}
+
+.activity-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+.activity-count {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--dark);
 }
 
 .sound-card {
@@ -520,6 +592,36 @@ button.secondary {
 .sound-description {
   color: var(--muted);
   line-height: 1.6;
+}
+
+.audio-player {
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 12px;
+}
+
+.audio-controls {
+  margin-top: 12px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volume-control span {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.volume-control input[type="range"] {
+  width: 180px;
 }
 
 .completed-banner,
@@ -564,7 +666,10 @@ button.secondary {
 
 @media (max-width: 860px) {
   .grid,
-  .mode-grid {
+  .mode-grid,
+  .four-up,
+  .two-up,
+  .activity-grid {
     grid-template-columns: 1fr;
   }
 
@@ -574,14 +679,20 @@ button.secondary {
 
   .step-header,
   .recent-top,
-  .section-row {
+  .section-row,
+  .audio-controls,
+  .add-step-row {
     flex-direction: column;
     align-items: flex-start;
   }
-}
 
-  .audio-player {
-  width: 100%;
-  margin-top: 12px;
-  border-radius: 12px;
+  .volume-control {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .volume-control input[type="range"] {
+    width: 100%;
+  }
 }

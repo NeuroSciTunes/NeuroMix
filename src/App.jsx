@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
 import warmupAmbient from "./assets/warmup_ambient.mp3";
@@ -27,6 +27,97 @@ function formatSavedDate(dateString) {
   return date.toLocaleString();
 }
 
+function toDateKey(dateInput) {
+  const date = new Date(dateInput);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatShortDayLabel(dateInput) {
+  const date = new Date(dateInput);
+  return date.toLocaleDateString(undefined, { weekday: "short" });
+}
+
+function getLast7DaysData(completedSessions) {
+  const countsByDay = completedSessions.reduce((acc, session) => {
+    const key = toDateKey(session.completedAt);
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const days = [];
+  const today = new Date();
+
+  for (let i = 6; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = toDateKey(d);
+
+    days.push({
+      key,
+      label: formatShortDayLabel(d),
+      count: countsByDay[key] || 0,
+      isToday: i === 0,
+    });
+  }
+
+  return days;
+}
+
+function getCurrentStreak(completedSessions) {
+  if (!completedSessions.length) return 0;
+
+  const uniqueDays = [...new Set(completedSessions.map((s) => toDateKey(s.completedAt)))].sort();
+  const daySet = new Set(uniqueDays);
+
+  let streak = 0;
+  const cursor = new Date();
+
+  while (true) {
+    const key = toDateKey(cursor);
+    if (daySet.has(key)) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+function getBestStreak(completedSessions) {
+  if (!completedSessions.length) return 0;
+
+  const uniqueDays = [...new Set(completedSessions.map((s) => toDateKey(s.completedAt)))].sort();
+  if (!uniqueDays.length) return 0;
+
+  let best = 1;
+  let current = 1;
+
+  for (let i = 1; i < uniqueDays.length; i += 1) {
+    const prev = new Date(uniqueDays[i - 1]);
+    const curr = new Date(uniqueDays[i]);
+    const diffDays = (curr - prev) / (1000 * 60 * 60 * 24);
+
+    if (diffDays === 1) {
+      current += 1;
+      best = Math.max(best, current);
+    } else {
+      current = 1;
+    }
+  }
+
+  return best;
+}
+
+function getSessionsToday(completedSessions) {
+  const todayKey = toDateKey(new Date());
+  return completedSessions.filter((s) => toDateKey(s.completedAt) === todayKey).length;
+}
+
 function getFavoriteMode(completedSessions) {
   if (!completedSessions.length) return "None yet";
 
@@ -53,118 +144,389 @@ function getTotalFocusMinutes(completedSessions) {
   return completedSessions.reduce((sum, session) => {
     const focusMinutes = session.plan
       .filter((step) => step.type === "focus")
-      .reduce((stepSum, step) => stepSum + step.minutes, 0);
+      .reduce((stepSum, step) => stepSum + Number(step.minutes || 0), 0);
 
     return sum + focusMinutes;
   }, 0);
 }
 
-  function getSoundForStep({ stepType, mode, mood, task, text }) {
-    if (stepType === "warmup") {
-      if (mode === "recovery") {
-        return {
-          soundTitle: "Soft Reset Soundscape",
-          soundDescription:
-            "Slow ambient textures with gentle movement to help your nervous system settle.",
-          audioFile: calmReset,
-        };
-      }
-
-      if (mood === "anxious" || text.includes("overwhelmed")) {
-        return {
-          soundTitle: "Steady Ambient Pad",
-          soundDescription:
-            "Minimal, stable sound with no sharp transitions so your mind can downshift safely.",
-          audioFile: warmupAmbient,
-        };
-      }
-
+function getSoundForStep({ stepType, mode, mood, task, text }) {
+  if (stepType === "warmup") {
+    if (mode === "recovery") {
       return {
-        soundTitle: "Focus Warm-Up Track",
+        soundTitle: "Soft Reset Soundscape",
         soundDescription:
-          "Light instrumental audio that helps you transition into work without overstimulation.",
+          "Slow ambient textures with gentle movement to help your nervous system settle.",
+        audioFile: calmReset,
+      };
+    }
+
+    if (mood === "anxious" || text.includes("overwhelmed")) {
+      return {
+        soundTitle: "Steady Ambient Pad",
+        soundDescription:
+          "Minimal, stable sound with no sharp transitions so your mind can downshift safely.",
         audioFile: warmupAmbient,
       };
     }
 
-    if (stepType === "focus") {
-      if (task === "creative") {
-        return {
-          soundTitle: "Flow-State Instrumental",
-          soundDescription:
-            "Melodic but non-distracting audio that supports ideation and sustained creative momentum.",
-          audioFile: focusFlow,
-        };
-      }
+    return {
+      soundTitle: "Focus Warm-Up Track",
+      soundDescription:
+        "Light instrumental audio that helps you transition into work without overstimulation.",
+      audioFile: warmupAmbient,
+    };
+  }
 
-      if (task === "mcat" || text.includes("exam") || text.includes("test")) {
-        return {
-          soundTitle: "Precision Focus Pulse",
-          soundDescription:
-            "Tight, low-distraction sound designed for problem solving and practice-question intensity.",
-          audioFile: deepFocus,
-        };
-      }
-
-      if (mode === "deepwork") {
-        return {
-          soundTitle: "Deep Work Drone",
-          soundDescription:
-            "Long-form minimal audio with almost no variation to protect deep cognitive effort.",
-          audioFile: deepFocus,
-        };
-      }
-
-      if (mode === "gentle") {
-        return {
-          soundTitle: "Low-Pressure Focus Bed",
-          soundDescription:
-            "Soft instrumental texture that supports concentration without feeling harsh or intense.",
-          audioFile: focusFlow,
-        };
-      }
-
+  if (stepType === "focus") {
+    if (task === "creative") {
       return {
-        soundTitle: "Low-Distraction Instrumental",
+        soundTitle: "Flow-State Instrumental",
         soundDescription:
-          "Steady background sound with no lyrical pull, built to reduce mental fragmentation.",
+          "Melodic but non-distracting audio that supports ideation and sustained creative momentum.",
         audioFile: focusFlow,
       };
     }
 
-    if (stepType === "break") {
-      if (mode === "recovery") {
-        return {
-          soundTitle: "Long Exhale Reset",
-          soundDescription:
-            "Breathing-friendly audio with more space, ideal for releasing tension between blocks.",
-          audioFile: calmReset,
-        };
-      }
-
+    if (task === "mcat" || text.includes("exam") || text.includes("test")) {
       return {
-        soundTitle: "Breathing Reset Soundscape",
+        soundTitle: "Precision Focus Pulse",
         soundDescription:
-          "A short decompression cue for stepping away, resetting, and avoiding doom scrolling.",
-        audioFile: breakReset,
+          "Tight, low-distraction sound designed for problem solving and practice-question intensity.",
+        audioFile: deepFocus,
+      };
+    }
+
+    if (mode === "deepwork") {
+      return {
+        soundTitle: "Deep Work Drone",
+        soundDescription:
+          "Long-form minimal audio with almost no variation to protect deep cognitive effort.",
+        audioFile: deepFocus,
+      };
+    }
+
+    if (mode === "gentle") {
+      return {
+        soundTitle: "Low-Pressure Focus Bed",
+        soundDescription:
+          "Soft instrumental texture that supports concentration without feeling harsh or intense.",
+        audioFile: focusFlow,
       };
     }
 
     return {
-      soundTitle: "Soft Reflection Piano",
+      soundTitle: "Low-Distraction Instrumental",
       soundDescription:
-        "Gentle closing audio to help you review what you completed and exit the session cleanly.",
-      audioFile: cooldownPiano,
+        "Steady background sound with no lyrical pull, built to reduce mental fragmentation.",
+      audioFile: focusFlow,
     };
   }
 
-  const planned = steps.reduce((sum, s) => sum + s.minutes, 0);
+  if (stepType === "break") {
+    if (mode === "recovery") {
+      return {
+        soundTitle: "Long Exhale Reset",
+        soundDescription:
+          "Breathing-friendly audio with more space, ideal for releasing tension between blocks.",
+        audioFile: calmReset,
+      };
+    }
+
+    return {
+      soundTitle: "Breathing Reset Soundscape",
+      soundDescription:
+        "A short decompression cue for stepping away, resetting, and avoiding doom scrolling.",
+      audioFile: breakReset,
+    };
+  }
+
+  return {
+    soundTitle: "Soft Reflection Piano",
+    soundDescription:
+      "Gentle closing audio to help you review what you completed and exit the session cleanly.",
+    audioFile: cooldownPiano,
+  };
+}
+
+function createStepTemplate(stepType, mode, mood, task, text = "") {
+  const baseSound = getSoundForStep({ stepType, mode, mood, task, text });
+
+  const defaults = {
+    warmup: {
+      title: "Warm-up",
+      minutes: 5,
+      prompt: "Settle in, breathe, and define your goal for this session.",
+    },
+    focus: {
+      title: "Focus Block",
+      minutes: 25,
+      prompt: "Work on one clear target without switching tasks.",
+    },
+    break: {
+      title: "Break",
+      minutes: 5,
+      prompt: "Step away, breathe, stretch, and avoid scrolling.",
+    },
+    cooldown: {
+      title: "Cool-down",
+      minutes: 5,
+      prompt: "Reflect on progress and decide your next step.",
+    },
+  };
+
+  return {
+    type: stepType,
+    ...defaults[stepType],
+    ...baseSound,
+  };
+}
+
+function generatePlan({ task, mood, energy, minutes, situation, mode }) {
+  const total = clamp(Number(minutes) || 0, 10, 240);
+  const text = (situation || "").toLowerCase();
+
+  let warmup =
+    mood === "anxious" || text.includes("overwhelmed")
+      ? 5
+      : mood === "tired"
+        ? 4
+        : 3;
+
+  let cooldown = mood === "anxious" ? 4 : 3;
+
+  let focusBlock = 25;
+  if (energy === "low") focusBlock = 15;
+  if (energy === "medium") focusBlock = 25;
+  if (energy === "high") {
+    focusBlock = task === "creative" ? 35 : task === "mcat" ? 35 : 30;
+  }
+
+  let shortBreak = mood === "anxious" ? 5 : 4;
+  let longBreak = mood === "anxious" ? 8 : 6;
+
+  if (text.includes("overwhelmed")) {
+    focusBlock = Math.min(focusBlock, 20);
+  }
+
+  if (text.includes("exam") || text.includes("mcat") || text.includes("test")) {
+    focusBlock = Math.max(focusBlock, 25);
+  }
+
+  if (mode === "lockin") {
+    focusBlock += 5;
+    shortBreak = Math.max(3, shortBreak - 1);
+    longBreak = Math.max(5, longBreak - 1);
+  }
+
+  if (mode === "gentle") {
+    warmup += 2;
+    focusBlock = Math.min(focusBlock, 20);
+    shortBreak += 1;
+  }
+
+  if (mode === "deepwork") {
+    focusBlock += 10;
+    shortBreak = Math.max(3, shortBreak - 1);
+    longBreak = Math.max(5, longBreak - 1);
+  }
+
+  if (mode === "recovery") {
+    warmup += 2;
+    cooldown += 2;
+    focusBlock = Math.min(focusBlock, 15);
+    shortBreak += 2;
+    longBreak += 2;
+  }
+
+  focusBlock = clamp(focusBlock, 10, 50);
+  shortBreak = clamp(shortBreak, 3, 10);
+  longBreak = clamp(longBreak, 5, 15);
+
+  let remaining = total - warmup - cooldown;
+  const steps = [];
+
+  let warmupPrompt =
+    "Use a ramp-in track and define the single goal of this session.";
+
+  if (text.includes("overwhelmed")) {
+    warmupPrompt =
+      "Take a slow ramp-in. Breathe, lower the pressure, and choose one tiny first step.";
+  } else if (mood === "anxious") {
+    warmupPrompt = "Use box breathing and a steady track to settle your mind.";
+  }
+
+  if (mode === "gentle") {
+    warmupPrompt += " Keep this session easy to enter. The goal is simply to begin.";
+  }
+
+  if (mode === "lockin") {
+    warmupPrompt += " Strip away distractions and commit to one target.";
+  }
+
+  if (mode === "recovery") {
+    warmupPrompt += " Give yourself permission to move slowly and reset.";
+  }
+
+  steps.push({
+    type: "warmup",
+    title: "Warm-up",
+    minutes: warmup,
+    prompt: warmupPrompt,
+    ...getSoundForStep({ stepType: "warmup", mode, mood, task, text }),
+  });
+
+  if (remaining < 10) {
+    steps.push({
+      type: "focus",
+      title: "Focus Sprint",
+      minutes: Math.max(1, remaining),
+      prompt: "Choose one small clear goal. No multitasking.",
+      ...getSoundForStep({ stepType: "focus", mode, mood, task, text }),
+    });
+
+    steps.push({
+      type: "cooldown",
+      title: "Cool-down",
+      minutes: cooldown,
+      prompt: "Reflect on what moved forward and what comes next.",
+      ...getSoundForStep({ stepType: "cooldown", mode, mood, task, text }),
+    });
+
+    return steps;
+  }
+
+  let focusCount = 0;
+
+  while (remaining > 0) {
+    const thisFocus = Math.min(focusBlock, remaining);
+    if (thisFocus < 8) break;
+
+    focusCount += 1;
+
+    let focusPrompt = "Do one thing at a time and finish the smallest next step.";
+
+    if (task === "studying") {
+      focusPrompt = "Use active recall. Quiz yourself instead of rereading.";
+    } else if (task === "writing") {
+      focusPrompt = "Draft first. Edit later.";
+    } else if (task === "creative") {
+      focusPrompt = "Stay in flow mode. Generate ideas without judging them.";
+    } else if (task === "mcat") {
+      focusPrompt = "Do practice questions, then review what you got wrong.";
+    }
+
+    if (text.includes("biochem")) {
+      focusPrompt += " Focus on mechanisms, pathways, and testing yourself out loud.";
+    }
+
+    if (text.includes("paper") || text.includes("essay")) {
+      focusPrompt += " Prioritize forward momentum over perfect wording.";
+    }
+
+    if (text.includes("overwhelmed")) {
+      focusPrompt += " Keep the bar low: just complete this block.";
+    }
+
+    if (mode === "lockin") {
+      focusPrompt += " Stay strict. No app switching and no passive drifting.";
+    }
+
+    if (mode === "deepwork") {
+      focusPrompt += " Protect depth. Avoid interruptions and stay with the problem longer.";
+    }
+
+    if (mode === "gentle") {
+      focusPrompt += " Do not chase perfection. Just create momentum.";
+    }
+
+    if (mode === "recovery") {
+      focusPrompt += " Work softly. The goal is progress without burning out.";
+    }
+
+    steps.push({
+      type: "focus",
+      title: `Focus Block ${focusCount}`,
+      minutes: thisFocus,
+      prompt: focusPrompt,
+      ...getSoundForStep({ stepType: "focus", mode, mood, task, text }),
+    });
+
+    remaining -= thisFocus;
+    if (remaining <= 0) break;
+
+    const isLong = focusCount % 3 === 0;
+    const breakLen = Math.min(isLong ? longBreak : shortBreak, remaining);
+    if (breakLen < 2) break;
+
+    let breakPrompt =
+      mood === "anxious" || text.includes("overwhelmed")
+        ? "Do a breathing reset. Inhale for 4, exhale for 6. No scrolling."
+        : "Stand up, drink water, and stretch. No scrolling.";
+
+    if (mode === "lockin") {
+      breakPrompt =
+        "Reset quickly. Move, breathe, and get back in without opening distracting apps.";
+    }
+
+    if (mode === "deepwork") {
+      breakPrompt =
+        "Keep the break clean and brief. Protect your mental momentum.";
+    }
+
+    if (mode === "recovery") {
+      breakPrompt =
+        "Take a fuller reset. Breathe, unclench, stretch, and let your system settle.";
+    }
+
+    steps.push({
+      type: "break",
+      title: isLong ? "Long Break" : "Short Break",
+      minutes: breakLen,
+      prompt: breakPrompt,
+      ...getSoundForStep({ stepType: "break", mode, mood, task, text }),
+    });
+
+    remaining -= breakLen;
+  }
+
+  let cooldownPrompt =
+    task === "studying" || task === "mcat"
+      ? "Write 3 bullets: what you learned and what to do next."
+      : "Reflect on what you finished and what your next step is.";
+
+  if (text.includes("overwhelmed")) {
+    cooldownPrompt =
+      "Acknowledge what you completed. Shrink the next step so it feels easy to restart later.";
+  }
+
+  if (mode === "lockin") {
+    cooldownPrompt += " Note exactly where you’ll resume next time.";
+  }
+
+  if (mode === "gentle") {
+    cooldownPrompt += " Give yourself credit for starting.";
+  }
+
+  if (mode === "recovery") {
+    cooldownPrompt += " End softly and avoid immediately jumping into more stress.";
+  }
+
+  steps.push({
+    type: "cooldown",
+    title: "Cool-down",
+    minutes: cooldown,
+    prompt: cooldownPrompt,
+    ...getSoundForStep({ stepType: "cooldown", mode, mood, task, text }),
+  });
+
+  const planned = steps.reduce((sum, s) => sum + Number(s.minutes || 0), 0);
   const diff = total - planned;
 
   if (diff > 0) {
     steps[steps.length - 1] = {
       ...steps[steps.length - 1],
-      minutes: steps[steps.length - 1].minutes + diff,
+      minutes: Number(steps[steps.length - 1].minutes || 0) + diff,
     };
   }
 
@@ -175,33 +537,59 @@ function StepCard({
   step,
   isActive,
   isEditing,
-  onEditToggle,
+  onEdit,
+  onDelete,
   onFieldChange,
-  onSaveEdit,
-  onCancelEdit,
+  onSave,
+  onCancel,
 }) {
   return (
     <div className={`step-card ${isActive ? "active-step" : ""}`}>
-      <div className="step-header">
-        <div className="step-title">{step.title}</div>
-        <div className="badge">
-          {step.type.toUpperCase()} • {minLabel(step.minutes)}
-        </div>
-      </div>
-
       {!isEditing ? (
         <>
+          <div className="step-header">
+            <div className="step-title">{step.title}</div>
+            <div className="badge">
+              {step.type.toUpperCase()} • {minLabel(step.minutes)}
+            </div>
+          </div>
+
           <div className="step-prompt">{step.prompt}</div>
           <div className="step-sound-chip">Sound: {step.soundTitle}</div>
 
           <div className="button-row compact-row">
-            <button className="secondary" onClick={onEditToggle}>
-              Edit Step
+            <button className="secondary" onClick={onEdit}>
+              Edit
+            </button>
+            <button className="danger-button" onClick={onDelete}>
+              Delete
             </button>
           </div>
         </>
       ) : (
         <div className="edit-panel">
+          <label>
+            <span>Type</span>
+            <select
+              value={step.type}
+              onChange={(e) => onFieldChange("type", e.target.value)}
+            >
+              <option value="warmup">Warm-up</option>
+              <option value="focus">Focus</option>
+              <option value="break">Break</option>
+              <option value="cooldown">Cool-down</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Title</span>
+            <input
+              type="text"
+              value={step.title}
+              onChange={(e) => onFieldChange("title", e.target.value)}
+            />
+          </label>
+
           <label>
             <span>Minutes</span>
             <input
@@ -243,10 +631,10 @@ function StepCard({
           </label>
 
           <div className="button-row compact-row">
-            <button className="primary" onClick={onSaveEdit}>
-              Save Changes
+            <button className="primary" onClick={onSave}>
+              Save
             </button>
-            <button className="secondary" onClick={onCancelEdit}>
+            <button className="secondary" onClick={onCancel}>
               Cancel
             </button>
           </div>
@@ -315,6 +703,38 @@ function FavoriteSessionCard({ session, onLoad, onRemove }) {
   );
 }
 
+function PresetCard({ preset, onLoad, onRemove }) {
+  return (
+    <div className="preset-card">
+      <div className="recent-top">
+        <div className="recent-title">{preset.name}</div>
+        <div className="recent-date">{formatSavedDate(preset.createdAt)}</div>
+      </div>
+
+      <div className="recent-mode">{preset.modeLabel}</div>
+
+      <div className="recent-situation">
+        {preset.task} • {preset.mood} • {preset.energy} • {preset.minutes} min
+      </div>
+
+      {preset.situation ? (
+        <div className="recent-situation">{preset.situation}</div>
+      ) : (
+        <div className="recent-situation muted">No situation added</div>
+      )}
+
+      <div className="button-row compact-row">
+        <button className="secondary" onClick={() => onLoad(preset)}>
+          Load Preset
+        </button>
+        <button className="danger-button" onClick={() => onRemove(preset.id)}>
+          Remove
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [task, setTask] = useState("studying");
   const [mood, setMood] = useState("anxious");
@@ -322,20 +742,28 @@ export default function App() {
   const [minutes, setMinutes] = useState(45);
   const [mode, setMode] = useState("lockin");
   const [situation, setSituation] = useState("");
+  const [presetName, setPresetName] = useState("");
 
   const [plan, setPlan] = useState(null);
   const [recentSessions, setRecentSessions] = useState([]);
   const [favoriteSessions, setFavoriteSessions] = useState([]);
   const [completedSessions, setCompletedSessions] = useState([]);
+  const [presets, setPresets] = useState([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [showCompletedBanner, setShowCompletedBanner] = useState(false);
   const [showFavoritedBanner, setShowFavoritedBanner] = useState(false);
+  const [showPresetBanner, setShowPresetBanner] = useState(false);
 
-  const [editingStepIndex, setEditingStepIndex] = useState(null);
+  const [audioVolume, setAudioVolume] = useState(0.7);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const [editingIndex, setEditingIndex] = useState(null);
   const [draftStep, setDraftStep] = useState(null);
+
+  const audioRef = useRef(null);
 
   const modeOptions = {
     lockin: {
@@ -377,7 +805,9 @@ export default function App() {
         .reduce((sum, step) => sum + Number(step.minutes || 0) * 60, 0)
     : 0;
 
-  const currentStepTotalSeconds = currentStep ? Number(currentStep.minutes || 0) * 60 : 0;
+  const currentStepTotalSeconds = currentStep
+    ? Number(currentStep.minutes || 0) * 60
+    : 0;
 
   const progressPercent =
     totalSessionSeconds > 0
@@ -395,6 +825,10 @@ export default function App() {
   const totalCompletedSessions = completedSessions.length;
   const totalFocusMinutes = getTotalFocusMinutes(completedSessions);
   const favoriteMode = getFavoriteMode(completedSessions);
+  const currentStreak = getCurrentStreak(completedSessions);
+  const bestStreak = getBestStreak(completedSessions);
+  const sessionsToday = getSessionsToday(completedSessions);
+  const last7Days = getLast7DaysData(completedSessions);
 
   useEffect(() => {
     const savedInputs = localStorage.getItem("neuromix_inputs");
@@ -402,6 +836,7 @@ export default function App() {
     const savedRecent = localStorage.getItem("neuromix_recent_sessions");
     const savedFavorites = localStorage.getItem("neuromix_favorite_sessions");
     const savedCompleted = localStorage.getItem("neuromix_completed_sessions");
+    const savedPresets = localStorage.getItem("neuromix_presets");
 
     if (savedInputs) {
       const parsedInputs = JSON.parse(savedInputs);
@@ -413,21 +848,11 @@ export default function App() {
       setMode(parsedInputs.mode || "lockin");
     }
 
-    if (savedPlan) {
-      setPlan(JSON.parse(savedPlan));
-    }
-
-    if (savedRecent) {
-      setRecentSessions(JSON.parse(savedRecent));
-    }
-
-    if (savedFavorites) {
-      setFavoriteSessions(JSON.parse(savedFavorites));
-    }
-
-    if (savedCompleted) {
-      setCompletedSessions(JSON.parse(savedCompleted));
-    }
+    if (savedPlan) setPlan(JSON.parse(savedPlan));
+    if (savedRecent) setRecentSessions(JSON.parse(savedRecent));
+    if (savedFavorites) setFavoriteSessions(JSON.parse(savedFavorites));
+    if (savedCompleted) setCompletedSessions(JSON.parse(savedCompleted));
+    if (savedPresets) setPresets(JSON.parse(savedPresets));
   }, []);
 
   useEffect(() => {
@@ -464,13 +889,15 @@ export default function App() {
   }, [completedSessions]);
 
   useEffect(() => {
+    localStorage.setItem("neuromix_presets", JSON.stringify(presets));
+  }, [presets]);
+
+  useEffect(() => {
     if (!isRunning || !sessionStarted || !currentStep) return;
 
     const interval = setInterval(() => {
       setSecondsLeft((prev) => {
-        if (prev > 1) {
-          return prev - 1;
-        }
+        if (prev > 1) return prev - 1;
 
         if (currentStepIndex < plan.length - 1) {
           setCurrentStepIndex((prevIndex) => prevIndex + 1);
@@ -484,6 +911,43 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, [isRunning, sessionStarted, currentStep, currentStepIndex, plan]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentStep) return;
+
+    audio.volume = audioVolume;
+    audio.muted = isMuted;
+  }, [audioVolume, isMuted, currentStep]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio || !currentStep) return;
+
+    audio.pause();
+    audio.load();
+
+    if (sessionStarted) {
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+      }
+    }
+  }, [currentStepIndex, currentStep, sessionStarted]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (sessionStarted && isRunning) {
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {});
+      }
+    } else {
+      audio.pause();
+    }
+  }, [sessionStarted, isRunning]);
 
   function buildSessionObject(sessionIdKey = "id") {
     return {
@@ -508,7 +972,7 @@ export default function App() {
     setSecondsLeft(0);
     setShowCompletedBanner(false);
     setShowFavoritedBanner(false);
-    setEditingStepIndex(null);
+    setEditingIndex(null);
     setDraftStep(null);
 
     const newSession = {
@@ -534,15 +998,51 @@ export default function App() {
     setMinutes(session.minutes);
     setSituation(session.situation || "");
     setMode(session.mode || "lockin");
-    setPlan(session.plan);
+    setPlan(session.plan || null);
     setCurrentStepIndex(0);
     setSessionStarted(false);
     setIsRunning(false);
     setSecondsLeft(0);
     setShowCompletedBanner(false);
     setShowFavoritedBanner(false);
-    setEditingStepIndex(null);
+    setEditingIndex(null);
     setDraftStep(null);
+  }
+
+  function handleSavePreset() {
+    const trimmedName = presetName.trim();
+    if (!trimmedName) return;
+
+    const preset = {
+      id: Date.now(),
+      createdAt: new Date().toISOString(),
+      name: trimmedName,
+      task,
+      mood,
+      energy,
+      minutes,
+      mode,
+      modeLabel: modeOptions[mode].label,
+      situation,
+    };
+
+    setPresets((prev) => [preset, ...prev].slice(0, 12));
+    setPresetName("");
+    setShowPresetBanner(true);
+  }
+
+  function handleLoadPreset(preset) {
+    setTask(preset.task);
+    setMood(preset.mood);
+    setEnergy(preset.energy);
+    setMinutes(preset.minutes);
+    setMode(preset.mode);
+    setSituation(preset.situation || "");
+    setShowPresetBanner(false);
+  }
+
+  function handleRemovePreset(id) {
+    setPresets((prev) => prev.filter((preset) => preset.id !== id));
   }
 
   function handleFavoriteCurrentSession() {
@@ -596,6 +1096,12 @@ export default function App() {
     setCurrentStepIndex(0);
     setSecondsLeft(0);
     setShowCompletedBanner(false);
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
   }
 
   function handleNextStep() {
@@ -624,6 +1130,11 @@ export default function App() {
     };
 
     setCompletedSessions((prev) => [completedSession, ...prev].slice(0, 20));
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+    }
   }
 
   function handleClear() {
@@ -635,9 +1146,14 @@ export default function App() {
     setSecondsLeft(0);
     setShowCompletedBanner(false);
     setShowFavoritedBanner(false);
-    setEditingStepIndex(null);
+    setEditingIndex(null);
     setDraftStep(null);
     localStorage.removeItem("neuromix_plan");
+
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+    }
   }
 
   function handleClearRecentSessions() {
@@ -655,43 +1171,87 @@ export default function App() {
     localStorage.removeItem("neuromix_completed_sessions");
   }
 
+  function handleClearPresets() {
+    setPresets([]);
+    localStorage.removeItem("neuromix_presets");
+  }
+
   function handleEditStep(index) {
     if (!plan) return;
-    setEditingStepIndex(index);
+    setEditingIndex(index);
     setDraftStep({ ...plan[index] });
   }
 
-  function handleDraftStepChange(field, value) {
-    setDraftStep((prev) => ({
-      ...prev,
-      [field]: field === "minutes" ? value : value,
-    }));
+  function handleStepFieldChange(field, value) {
+    setDraftStep((prev) => {
+      if (!prev) return prev;
+
+      let updated = { ...prev, [field]: value };
+
+      if (field === "type") {
+        const replacement = createStepTemplate(
+          value,
+          mode,
+          mood,
+          task,
+          (situation || "").toLowerCase()
+        );
+
+        updated = {
+          ...replacement,
+          minutes: prev.minutes,
+        };
+      }
+
+      return updated;
+    });
   }
 
-  function handleSaveStepEdit() {
-    if (editingStepIndex === null || !draftStep || !plan) return;
-
-    const normalizedMinutes = clamp(Number(draftStep.minutes) || 1, 1, 120);
+  function handleSaveStep() {
+    if (!plan || editingIndex === null || !draftStep) return;
 
     const updatedPlan = [...plan];
-    updatedPlan[editingStepIndex] = {
+    updatedPlan[editingIndex] = {
       ...draftStep,
-      minutes: normalizedMinutes,
+      minutes: clamp(Number(draftStep.minutes) || 1, 1, 120),
     };
 
     setPlan(updatedPlan);
-
-    if (sessionStarted && editingStepIndex === currentStepIndex) {
-      setSecondsLeft(normalizedMinutes * 60);
-    }
-
-    setEditingStepIndex(null);
+    setEditingIndex(null);
     setDraftStep(null);
   }
 
-  function handleCancelStepEdit() {
-    setEditingStepIndex(null);
+  function handleCancelEdit() {
+    setEditingIndex(null);
     setDraftStep(null);
+  }
+
+  function handleDeleteStep(index) {
+    if (!plan || plan.length <= 1) return;
+
+    const updatedPlan = plan.filter((_, i) => i !== index);
+    setPlan(updatedPlan);
+
+    if (currentStepIndex >= updatedPlan.length) {
+      setCurrentStepIndex(Math.max(0, updatedPlan.length - 1));
+    }
+
+    if (editingIndex === index) {
+      setEditingIndex(null);
+      setDraftStep(null);
+    }
+  }
+
+  function handleAddStep(stepType) {
+    const newStep = createStepTemplate(
+      stepType,
+      mode,
+      mood,
+      task,
+      (situation || "").toLowerCase()
+    );
+
+    setPlan((prev) => (prev ? [...prev, newStep] : [newStep]));
   }
 
   return (
@@ -710,7 +1270,8 @@ export default function App() {
           <h1>Build focus sessions designed for your brain state</h1>
           <p className="subtitle">
             NeuroMix helps you turn overwhelm into action by generating a guided
-            session based on your mood, energy, mode, task, available time, and what’s actually going on.
+            session based on your mood, energy, mode, task, available time, and
+            what’s actually going on.
           </p>
 
           <div className="hero-actions">
@@ -737,7 +1298,26 @@ export default function App() {
             )}
           </div>
 
-          <div className="quick-stats">
+          <div className="quick-stats four-up">
+            <div className="stat-box">
+              <div className="stat-label">Current Streak</div>
+              <div className="stat-value">{currentStreak}</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-label">Best Streak</div>
+              <div className="stat-value">{bestStreak}</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-label">Sessions Today</div>
+              <div className="stat-value">{sessionsToday}</div>
+            </div>
+            <div className="stat-box">
+              <div className="stat-label">Favorite Mode</div>
+              <div className="stat-value">{favoriteMode}</div>
+            </div>
+          </div>
+
+          <div className="quick-stats two-up" style={{ marginTop: 10 }}>
             <div className="stat-box">
               <div className="stat-label">Completed Sessions</div>
               <div className="stat-value">{totalCompletedSessions}</div>
@@ -746,9 +1326,20 @@ export default function App() {
               <div className="stat-label">Total Focus Minutes</div>
               <div className="stat-value">{totalFocusMinutes}</div>
             </div>
-            <div className="stat-box">
-              <div className="stat-label">Favorite Mode</div>
-              <div className="stat-value">{favoriteMode}</div>
+          </div>
+
+          <div className="activity-strip">
+            <div className="activity-title">Last 7 Days</div>
+            <div className="activity-grid">
+              {last7Days.map((day) => (
+                <div
+                  key={day.key}
+                  className={`activity-day ${day.count > 0 ? "active-day" : ""} ${day.isToday ? "today-day" : ""}`}
+                >
+                  <div className="activity-label">{day.label}</div>
+                  <div className="activity-count">{day.count}</div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -829,6 +1420,24 @@ export default function App() {
               />
             </label>
 
+            <div className="preset-builder">
+              <label>
+                <span>Preset Name</span>
+                <input
+                  type="text"
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  placeholder="Example: MCAT Deep Work 90"
+                />
+              </label>
+
+              <div className="button-row compact-row">
+                <button className="secondary" onClick={handleSavePreset}>
+                  Save Preset
+                </button>
+              </div>
+            </div>
+
             <div className="button-row">
               <button className="primary" onClick={handleGeneratePlan}>
                 Generate Plan
@@ -870,8 +1479,42 @@ export default function App() {
                 ? `Situation: ${situation}`
                 : "Add a situation to make your session plan feel more personal and context-aware."}
             </p>
+
+            {showPresetBanner && (
+              <div className="favorited-banner" style={{ marginTop: 14 }}>
+                Preset saved.
+              </div>
+            )}
           </section>
         </div>
+
+        <section className="card" style={{ marginTop: 18 }}>
+          <div className="section-row">
+            <h2>Saved Presets</h2>
+            {presets.length > 0 && (
+              <button className="secondary" onClick={handleClearPresets}>
+                Clear Presets
+              </button>
+            )}
+          </div>
+
+          {presets.length === 0 ? (
+            <p className="empty-text">
+              No presets yet. Save a setup you use often.
+            </p>
+          ) : (
+            <div className="recent-grid">
+              {presets.map((preset) => (
+                <PresetCard
+                  key={preset.id}
+                  preset={preset}
+                  onLoad={handleLoadPreset}
+                  onRemove={handleRemovePreset}
+                />
+              ))}
+            </div>
+          )}
+        </section>
 
         <section className="card" style={{ marginTop: 18 }}>
           <div className="section-row">
@@ -939,20 +1582,36 @@ export default function App() {
           </div>
 
           {showFavoritedBanner && (
-            <div className="favorited-banner">
-              Session saved to favorites.
-            </div>
+            <div className="favorited-banner">Session saved to favorites.</div>
           )}
 
           {!plan ? (
             <p className="empty-text">
-              Generate a plan to see your warm-up, focus blocks, breaks, and cool-down.
+              Generate a plan to see your warm-up, focus blocks, breaks, and
+              cool-down.
             </p>
           ) : (
             <>
-              <p className="summary-text">
-                Total planned: <strong>{totalPlanned} minutes</strong>
-              </p>
+              <div className="section-row" style={{ marginTop: 10 }}>
+                <p className="summary-text">
+                  Total planned: <strong>{totalPlanned} minutes</strong>
+                </p>
+
+                <div className="add-step-row">
+                  <button className="secondary" onClick={() => handleAddStep("warmup")}>
+                    + Warm-up
+                  </button>
+                  <button className="secondary" onClick={() => handleAddStep("focus")}>
+                    + Focus
+                  </button>
+                  <button className="secondary" onClick={() => handleAddStep("break")}>
+                    + Break
+                  </button>
+                  <button className="secondary" onClick={() => handleAddStep("cooldown")}>
+                    + Cool-down
+                  </button>
+                </div>
+              </div>
 
               <p className="mini-text">
                 Current mode: <strong>{modeOptions[mode].label}</strong>
@@ -968,13 +1627,14 @@ export default function App() {
                 {plan.map((step, index) => (
                   <StepCard
                     key={index}
-                    step={editingStepIndex === index ? draftStep : step}
+                    step={editingIndex === index ? draftStep : step}
                     isActive={sessionStarted && index === currentStepIndex}
-                    isEditing={editingStepIndex === index}
-                    onEditToggle={() => handleEditStep(index)}
-                    onFieldChange={handleDraftStepChange}
-                    onSaveEdit={handleSaveStepEdit}
-                    onCancelEdit={handleCancelStepEdit}
+                    isEditing={editingIndex === index}
+                    onEdit={() => handleEditStep(index)}
+                    onDelete={() => handleDeleteStep(index)}
+                    onFieldChange={handleStepFieldChange}
+                    onSave={handleSaveStep}
+                    onCancel={handleCancelEdit}
                   />
                 ))}
               </div>
@@ -1029,16 +1689,31 @@ export default function App() {
                         {currentStep.soundDescription}
                       </div>
 
-                      <audio
-                        className="audio-player"
-                        controls
-                        loop
-                        autoPlay
-                        key={currentStepIndex}
-                      >
+                      <audio ref={audioRef} className="audio-player" loop>
                         <source src={currentStep.audioFile} type="audio/mpeg" />
                         Your browser does not support the audio element.
                       </audio>
+
+                      <div className="audio-controls">
+                        <button
+                          className="secondary"
+                          onClick={() => setIsMuted((prev) => !prev)}
+                        >
+                          {isMuted ? "Unmute" : "Mute"}
+                        </button>
+
+                        <label className="volume-control">
+                          <span>Volume</span>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.01"
+                            value={audioVolume}
+                            onChange={(e) => setAudioVolume(Number(e.target.value))}
+                          />
+                        </label>
+                      </div>
                     </div>
                   </>
                 )}
