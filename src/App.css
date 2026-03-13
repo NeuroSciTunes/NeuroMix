@@ -715,3 +715,7 @@ button.secondary {
 .drag-handle:active {
   cursor: grabbing;
 }
+
+.step-card .button-row {
+  margin-top: 14px;
+}
