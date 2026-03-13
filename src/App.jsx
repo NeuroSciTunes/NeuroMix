@@ -297,7 +297,7 @@ function createStepTemplate(stepType, mode, mood, task, text = "") {
   };
 }
 
-function generatePlan({ task, mood, energy, minutes, situation, mode }) {
+function generatePlan({ task, mood, energy, minutes, situation, mode, planStyle }) {
   const total = clamp(Number(minutes) || 0, 10, 240);
   const text = (situation || "").toLowerCase();
 
@@ -319,6 +319,51 @@ function generatePlan({ task, mood, energy, minutes, situation, mode }) {
 
   let shortBreak = mood === "anxious" ? 5 : 4;
   let longBreak = mood === "anxious" ? 8 : 6;
+
+  if (planStyle === "cars") {
+    focusBlock = 30;
+    shortBreak = 5;
+    longBreak = 7;
+  }
+
+  if (planStyle === "mcatProblemSolving") {
+    focusBlock = Math.max(focusBlock, 35);
+    shortBreak = 4;
+    longBreak = 6;
+  }
+
+  if (planStyle === "activeRecall") {
+    focusBlock = Math.min(Math.max(focusBlock, 25), 35);
+    shortBreak = 5;
+    longBreak = 8;
+  }
+
+  if (planStyle === "memorization") {
+    focusBlock = Math.min(focusBlock, 20);
+    shortBreak = Math.max(shortBreak, 5);
+    longBreak = Math.max(longBreak, 8);
+  }
+
+  if (planStyle === "reviewMistakes") {
+    focusBlock = Math.min(focusBlock, 20);
+    shortBreak = Math.max(shortBreak, 5);
+    longBreak = Math.max(longBreak, 8);
+    cooldown += 3;
+  }
+
+  if (planStyle === "writing") {
+    focusBlock = Math.max(focusBlock, 30);
+    shortBreak = 4;
+    longBreak = 6;
+  }
+
+  if (planStyle === "overwhelmedReset") {
+    warmup += 2;
+    focusBlock = Math.min(focusBlock, 12);
+    shortBreak = Math.max(shortBreak, 6);
+    longBreak = Math.max(longBreak, 8);
+    cooldown += 2;
+  }
 
   if (text.includes("overwhelmed")) {
     focusBlock = Math.min(focusBlock, 20);
