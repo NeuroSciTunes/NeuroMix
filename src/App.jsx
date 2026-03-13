@@ -1271,6 +1271,23 @@ export default function App() {
     }
   }
 
+  function handleDragEnd(event) {
+
+    const {active, over} = event
+
+    if(!over || active.id===over.id) return
+
+    setPlan((prev)=>{
+
+      const oldIndex = Number(active.id)
+      const newIndex = Number(over.id)
+
+      return arrayMove(prev,oldIndex,newIndex)
+
+    })
+
+  }
+
   function handleAddStep(stepType) {
     const newStep = createStepTemplate(
       stepType,
