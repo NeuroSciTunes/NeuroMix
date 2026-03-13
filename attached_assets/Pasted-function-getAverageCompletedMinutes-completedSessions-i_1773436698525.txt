@@ -1,0 +1,77 @@
+function getAverageCompletedMinutes(completedSessions) {
+  if (!completedSessions.length) return 0;
+
+  const total = completedSessions.reduce(
+    (sum, session) => sum + Number(session.minutes || 0),
+    0
+  );
+
+  return Math.round(total / completedSessions.length);
+}
+
+function getRecommendedMinutes(completedSessions, currentTask, currentMood, currentEnergy) {
+  if (!completedSessions.length) return 45;
+
+  const matchingSessions = completedSessions.filter(
+    (session) =>
+      session.task === currentTask &&
+      session.mood === currentMood &&
+      session.energy === currentEnergy
+  );
+
+  const source = matchingSessions.length >= 2 ? matchingSessions : completedSessions;
+
+  const avg =
+    source.reduce((sum, session) => sum + Number(session.minutes || 0), 0) /
+    source.length;
+
+  if (avg <= 25) return 25;
+  if (avg <= 40) return 30;
+  if (avg <= 55) return 45;
+  if (avg <= 75) return 60;
+  if (avg <= 105) return 90;
+  return 120;
+}
+
+function getRecommendedMode(completedSessions, currentTask) {
+  if (!completedSessions.length) return null;
+
+  const taskMatches = completedSessions.filter((session) => session.task === currentTask);
+  const source = taskMatches.length ? taskMatches : completedSessions;
+
+  const counts = source.reduce((acc, session) => {
+    acc[session.mode] = (acc[session.mode] || 0) + 1;
+    return acc;
+  }, {});
+
+  let bestMode = null;
+  let bestCount = 0;
+
+  for (const mode in counts) {
+    if (counts[mode] > bestCount) {
+      bestCount = counts[mode];
+      bestMode = mode;
+    }
+  }
+
+  return bestMode;
+}
+
+function getRecommendationReason(completedSessions, currentTask, currentMood, currentEnergy) {
+  if (!completedSessions.length) {
+    return "Start with a balanced session length and adjust as you build history.";
+  }
+
+  const matchingSessions = completedSessions.filter(
+    (session) =>
+      session.task === currentTask &&
+      session.mood === currentMood &&
+      session.energy === currentEnergy
+  );
+
+  if (matchingSessions.length >= 2) {
+    return `Based on your completed ${currentTask} sessions when feeling ${currentMood} with ${currentEnergy} energy.`;
+  }
+
+  return "Based on your overall completed session history so far.";
+}
