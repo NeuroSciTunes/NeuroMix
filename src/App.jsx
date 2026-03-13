@@ -781,6 +781,7 @@ const studyTemplates = [
     energy: "medium",
     minutes: 90,
     mode: "deepwork",
+    planStyle: "mcatProblemSolving",
     situation:
       "I need to work through MCAT chemistry and physics practice questions carefully and review mistakes.",
   },
@@ -793,6 +794,7 @@ const studyTemplates = [
     energy: "medium",
     minutes: 60,
     mode: "lockin",
+    planStyle: "cars",
     situation:
       "I need to stay focused while reading MCAT CARS passages and avoid zoning out.",
   },
@@ -805,6 +807,7 @@ const studyTemplates = [
     energy: "medium",
     minutes: 90,
     mode: "deepwork",
+    planStyle: "activeRecall",
     situation:
       "I need to study biology and biochemistry for the MCAT using active recall and practice questions.",
   },
@@ -817,6 +820,7 @@ const studyTemplates = [
     energy: "low",
     minutes: 45,
     mode: "gentle",
+    planStyle: "memorization",
     situation:
       "I need to review psychology and sociology terms for the MCAT without getting overwhelmed.",
   },
@@ -829,6 +833,7 @@ const studyTemplates = [
     energy: "low",
     minutes: 45,
     mode: "gentle",
+    planStyle: "reviewMistakes",
     situation:
       "I need to review missed questions, understand why I got them wrong, and stay calm.",
   },
@@ -841,6 +846,7 @@ const studyTemplates = [
     energy: "low",
     minutes: 30,
     mode: "gentle",
+    planStyle: "memorization",
     situation:
       "I need to get through flashcards with consistency and not overcomplicate the session.",
   },
@@ -853,6 +859,7 @@ const studyTemplates = [
     energy: "medium",
     minutes: 60,
     mode: "lockin",
+    planStyle: "writing",
     situation:
       "I need to write without overthinking and focus on getting words on the page first.",
   },
@@ -865,6 +872,7 @@ const studyTemplates = [
     energy: "low",
     minutes: 25,
     mode: "recovery",
+    planStyle: "overwhelmedReset",
     situation:
       "I feel overwhelmed and need a very manageable session that helps me just begin.",
   },
