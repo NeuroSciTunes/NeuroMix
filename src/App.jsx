@@ -547,7 +547,8 @@ function generatePlan({ task, mood, energy, minutes, situation, mode }) {
   return steps;
 }
 
-function StepCard({
+function SortableStepCard({
+  id,
   step,
   isActive,
   isEditing,
@@ -555,26 +556,54 @@ function StepCard({
   onDelete,
   onFieldChange,
   onSave,
-  onCancel,
+  onCancel
 }) {
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition
+  };
+
   return (
-    <div className={`step-card ${isActive ? "active-step" : ""}`}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`step-card ${isActive ? "active-step" : ""}`}
+    >
+
+      <div className="drag-handle" {...attributes} {...listeners}>
+        ☰
+      </div>
+
       {!isEditing ? (
         <>
           <div className="step-header">
             <div className="step-title">{step.title}</div>
+
             <div className="badge">
-              {step.type.toUpperCase()} • {minLabel(step.minutes)}
+              {step.type.toUpperCase()} • {step.minutes} min
             </div>
           </div>
 
           <div className="step-prompt">{step.prompt}</div>
-          <div className="step-sound-chip">Sound: {step.soundTitle}</div>
+
+          <div className="step-sound-chip">
+            Sound: {step.soundTitle}
+          </div>
 
           <div className="button-row compact-row">
             <button className="secondary" onClick={onEdit}>
               Edit
             </button>
+
             <button className="danger-button" onClick={onDelete}>
               Delete
             </button>
@@ -582,65 +611,48 @@ function StepCard({
         </>
       ) : (
         <div className="edit-panel">
+
           <label>
             <span>Type</span>
+
             <select
               value={step.type}
-              onChange={(e) => onFieldChange("type", e.target.value)}
+              onChange={(e)=>onFieldChange("type",e.target.value)}
             >
-              <option value="warmup">Warm-up</option>
+              <option value="warmup">Warmup</option>
               <option value="focus">Focus</option>
               <option value="break">Break</option>
-              <option value="cooldown">Cool-down</option>
+              <option value="cooldown">Cooldown</option>
             </select>
+
           </label>
 
           <label>
             <span>Title</span>
+
             <input
-              type="text"
               value={step.title}
-              onChange={(e) => onFieldChange("title", e.target.value)}
+              onChange={(e)=>onFieldChange("title",e.target.value)}
             />
           </label>
 
           <label>
             <span>Minutes</span>
+
             <input
               type="number"
-              min={1}
-              max={120}
               value={step.minutes}
-              onChange={(e) => onFieldChange("minutes", e.target.value)}
+              onChange={(e)=>onFieldChange("minutes",e.target.value)}
             />
           </label>
 
           <label>
             <span>Prompt</span>
-            <textarea
-              className="situation-box"
-              rows={4}
-              value={step.prompt}
-              onChange={(e) => onFieldChange("prompt", e.target.value)}
-            />
-          </label>
 
-          <label>
-            <span>Sound Title</span>
-            <input
-              type="text"
-              value={step.soundTitle}
-              onChange={(e) => onFieldChange("soundTitle", e.target.value)}
-            />
-          </label>
-
-          <label>
-            <span>Sound Description</span>
             <textarea
-              className="situation-box"
               rows={3}
-              value={step.soundDescription}
-              onChange={(e) => onFieldChange("soundDescription", e.target.value)}
+              value={step.prompt}
+              onChange={(e)=>onFieldChange("prompt",e.target.value)}
             />
           </label>
 
@@ -648,12 +660,15 @@ function StepCard({
             <button className="primary" onClick={onSave}>
               Save
             </button>
+
             <button className="secondary" onClick={onCancel}>
               Cancel
             </button>
           </div>
+
         </div>
       )}
+
     </div>
   );
 }
