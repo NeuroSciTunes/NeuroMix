@@ -158,13 +158,13 @@ a {
 }
 
 .stats-card {
-  margin-bottom: 28px;
+  margin-bottom: 40px;
 }
 
 .grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  gap: 18px;
+  gap: 24px;
   align-items: start;
 }
 
@@ -695,14 +695,4 @@ button.secondary {
   .volume-control input[type="range"] {
     width: 100%;
   }
-}
-.drag-handle {
-  cursor: grab;
-  font-size: 20px;
-  margin-bottom: 6px;
-  opacity: .6;
-}
-
-.drag-handle:hover {
-  opacity: 1;
 }
