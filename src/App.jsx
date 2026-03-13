@@ -1122,7 +1122,11 @@ export default function App() {
   }
 
   function handleGeneratePlan() {
-    const newPlan = generatePlan(inputs);
+    const newPlan = generatePlan({
+      ...inputs,
+      planStyle: selectedTemplate?.planStyle || null,
+    });
+
     setPlan(newPlan);
     setCurrentStepIndex(0);
     setSessionStarted(false);
@@ -1143,6 +1147,8 @@ export default function App() {
       mode,
       modeLabel: modeOptions[mode].label,
       situation,
+      selectedTemplateId,
+      templateName: selectedTemplate?.name || null,
       plan: newPlan,
     };
 
