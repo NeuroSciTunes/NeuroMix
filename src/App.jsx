@@ -1517,6 +1517,29 @@ export default function App() {
               to do, and how much time you have.
             </p>
 
+            <div className="template-section">
+              <div className="template-section-header">
+                <h3 className="template-title">Study Templates</h3>
+                <p className="template-subtitle">
+                  Quick-start sessions for MCAT prep, writing, review, and low-energy study blocks.
+                </p>
+              </div>
+
+              <div className="template-grid">
+                {studyTemplates.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    className="template-card"
+                    onClick={() => handleApplyTemplate(template)}
+                  >
+                    <div className="template-card-title">{template.name}</div>
+                    <div className="template-card-description">{template.description}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="mode-grid">
               {Object.entries(modeOptions).map(([key, option]) => (
                 <button
