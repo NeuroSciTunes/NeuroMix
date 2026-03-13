@@ -696,3 +696,13 @@ button.secondary {
     width: 100%;
   }
 }
+.drag-handle {
+  cursor: grab;
+  font-size: 20px;
+  margin-bottom: 6px;
+  opacity: .6;
+}
+
+.drag-handle:hover {
+  opacity: 1;
+}
