@@ -786,3 +786,27 @@ button.secondary {
   background: linear-gradient(180deg, #ffffff 0%, #f6f1ff 100%);
   box-shadow: 0 8px 20px rgba(122, 66, 255, 0.12);
 }
+
+.recommendation-card {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #f7f2ff 0%, #f2f6ff 100%);
+  border: 1px solid #ddd8ff;
+}
+
+.recommendation-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--purple);
+  margin-bottom: 6px;
+}
+
+.recommendation-main {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--dark);
+  font-weight: 600;
+}
