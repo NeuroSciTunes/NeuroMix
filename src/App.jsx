@@ -290,6 +290,7 @@ function createStepTemplate(stepType, mode, mood, task, text = "") {
   };
 
   return {
+    id: `${stepType}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type: stepType,
     ...defaults[stepType],
     ...baseSound,
@@ -383,6 +384,7 @@ function generatePlan({ task, mood, energy, minutes, situation, mode }) {
   }
 
   steps.push({
+    id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type: "warmup",
     title: "Warm-up",
     minutes: warmup,
@@ -392,6 +394,7 @@ function generatePlan({ task, mood, energy, minutes, situation, mode }) {
 
   if (remaining < 10) {
     steps.push({
+      id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       type: "focus",
       title: "Focus Sprint",
       minutes: Math.max(1, remaining),
@@ -400,6 +403,7 @@ function generatePlan({ task, mood, energy, minutes, situation, mode }) {
     });
 
     steps.push({
+      id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       type: "cooldown",
       title: "Cool-down",
       minutes: cooldown,
@@ -459,6 +463,7 @@ function generatePlan({ task, mood, energy, minutes, situation, mode }) {
     }
 
     steps.push({
+      id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       type: "focus",
       title: `Focus Block ${focusCount}`,
       minutes: thisFocus,
@@ -494,6 +499,7 @@ function generatePlan({ task, mood, energy, minutes, situation, mode }) {
     }
 
     steps.push({
+      id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       type: "break",
       title: isLong ? "Long Break" : "Short Break",
       minutes: breakLen,
@@ -527,6 +533,7 @@ function generatePlan({ task, mood, energy, minutes, situation, mode }) {
   }
 
   steps.push({
+    id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type: "cooldown",
     title: "Cool-down",
     minutes: cooldown,
@@ -877,7 +884,13 @@ export default function App() {
       setMode(parsedInputs.mode || "lockin");
     }
 
-    if (savedPlan) setPlan(JSON.parse(savedPlan));
+    if (savedPlan) {
+      const parsed = JSON.parse(savedPlan);
+      const migrated = parsed.map((step) =>
+        step.id ? step : { ...step, id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` }
+      );
+      setPlan(migrated);
+    }
     if (savedRecent) setRecentSessions(JSON.parse(savedRecent));
     if (savedFavorites) setFavoriteSessions(JSON.parse(savedFavorites));
     if (savedCompleted) setCompletedSessions(JSON.parse(savedCompleted));
@@ -1272,20 +1285,14 @@ export default function App() {
   }
 
   function handleDragEnd(event) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-    const {active, over} = event
-
-    if(!over || active.id===over.id) return
-
-    setPlan((prev)=>{
-
-      const oldIndex = Number(active.id)
-      const newIndex = Number(over.id)
-
-      return arrayMove(prev,oldIndex,newIndex)
-
-    })
-
+    setPlan((prev) => {
+      const oldIndex = prev.findIndex((step) => step.id === active.id);
+      const newIndex = prev.findIndex((step) => step.id === over.id);
+      return arrayMove(prev, oldIndex, newIndex);
+    });
   }
 
   function handleAddStep(stepType) {
@@ -1675,7 +1682,7 @@ export default function App() {
               >
 
                 <SortableContext
-                  items={plan.map((_,i)=>i.toString())}
+                  items={plan.map((step) => step.id)}
                   strategy={verticalListSortingStrategy}
                 >
 
@@ -1683,8 +1690,8 @@ export default function App() {
 
                     {plan.map((step,index)=>(
                       <SortableStepCard
-                        key={index}
-                        id={index.toString()}
+                        key={step.id}
+                        id={step.id}
                         step={editingIndex===index?draftStep:step}
                         isActive={sessionStarted && index===currentStepIndex}
                         isEditing={editingIndex===index}
