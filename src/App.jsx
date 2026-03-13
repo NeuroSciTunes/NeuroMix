@@ -1,6 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
+import {
+  DndContext,
+  closestCenter
+} from "@dnd-kit/core";
+
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+
+import { CSS } from "@dnd-kit/utilities";
+
 import warmupAmbient from "./assets/warmup_ambient.mp3";
 import focusFlow from "./assets/focus_flow.mp3";
 import deepFocus from "./assets/deep_focus.mp3";
