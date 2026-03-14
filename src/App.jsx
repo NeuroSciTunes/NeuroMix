@@ -1070,6 +1070,9 @@ export default function App() {
   const [editingIndex, setEditingIndex] = useState(null);
   const [draftStep, setDraftStep] = useState(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+  const [planGenerationMode, setPlanGenerationMode] = useState("smart");
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [planError, setPlanError] = useState("");
 
   const audioRef = useRef(null);
 
