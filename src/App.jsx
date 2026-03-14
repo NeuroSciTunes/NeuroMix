@@ -1966,6 +1966,10 @@ export default function App() {
               </p>
             )}
 
+            <p className="mini-text" style={{ marginTop: 12 }}>
+              Generation Mode: <strong>{planGenerationMode === "ai" ? "AI Plan" : "Smart Plan"}</strong>
+            </p>
+
             <div className="recommendation-card">
               <div className="recommendation-label">Neuro Recommendation</div>
               <div className="recommendation-main">
