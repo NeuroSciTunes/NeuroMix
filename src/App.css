@@ -810,3 +810,55 @@ button.secondary {
   color: var(--dark);
   font-weight: 600;
 }
+
+.generation-toggle {
+  margin-bottom: 16px;
+  padding: 14px;
+  border-radius: 18px;
+  background: #f8f9ff;
+  border: 1px solid #e6eaff;
+}
+
+.generation-toggle-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--dark);
+  margin-bottom: 10px;
+}
+
+.generation-toggle-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.generation-pill {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.generation-pill-active {
+  border: 2px solid var(--purple);
+  background: linear-gradient(180deg, #ffffff 0%, #f6f1ff 100%);
+  color: var(--purple);
+}
+
+.plan-info-banner {
+  padding: 12px 14px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  background: #eef4ff;
+  border: 1px solid #cfe0ff;
+  color: #23408e;
+  font-weight: 600;
+}
+
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
