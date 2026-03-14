@@ -1320,38 +1320,62 @@ export default function App() {
     };
   }
 
-  function handleGeneratePlan() {
-    const newPlan = generatePlan({
-      ...inputs,
-      planStyle: selectedTemplate?.planStyle || null,
-    });
-
-    setPlan(newPlan);
-    setCurrentStepIndex(0);
-    setSessionStarted(false);
-    setIsRunning(false);
-    setSecondsLeft(0);
+  async function handleGeneratePlan() {
+    setIsGeneratingPlan(true);
+    setPlanError("");
     setShowCompletedBanner(false);
     setShowFavoritedBanner(false);
     setEditingIndex(null);
     setDraftStep(null);
 
-    const newSession = {
-      id: Date.now(),
-      createdAt: new Date().toISOString(),
-      task,
-      mood,
-      energy,
-      minutes,
-      mode,
-      modeLabel: modeOptions[mode].label,
-      situation,
-      selectedTemplateId,
-      templateName: selectedTemplate?.name || null,
-      plan: newPlan,
+    const planInputs = {
+      ...inputs,
+      planStyle: selectedTemplate?.planStyle || null,
     };
 
-    setRecentSessions((prev) => [newSession, ...prev].slice(0, 5));
+    try {
+      let newPlan = null;
+
+      if (planGenerationMode === "ai") {
+        const result = await generateAIPlan(planInputs);
+        newPlan = result.plan;
+
+        if (result.source === "fallback" && result.message) {
+          setPlanError(result.message);
+        }
+      } else {
+        newPlan = generatePlan(planInputs);
+      }
+
+      setPlan(newPlan);
+      setCurrentStepIndex(0);
+      setSessionStarted(false);
+      setIsRunning(false);
+      setSecondsLeft(0);
+
+      const newSession = {
+        id: Date.now(),
+        createdAt: new Date().toISOString(),
+        task,
+        mood,
+        energy,
+        minutes,
+        mode,
+        modeLabel: modeOptions[mode].label,
+        situation,
+        selectedTemplateId,
+        templateName: selectedTemplate?.name || null,
+        generationMode: planGenerationMode,
+        plan: newPlan,
+      };
+
+      setRecentSessions((prev) => [newSession, ...prev].slice(0, 5));
+    } catch (error) {
+      console.error(error);
+      setPlanError("Something went wrong while generating your plan.");
+    } finally {
+      setIsGeneratingPlan(false);
+    }
   }
 
   function handleLoadSession(session) {
