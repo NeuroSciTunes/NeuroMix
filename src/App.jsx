@@ -2103,6 +2103,10 @@ export default function App() {
             <div className="favorited-banner">Session saved to favorites.</div>
           )}
 
+          {planError && (
+            <div className="plan-info-banner">{planError}</div>
+          )}
+
           {!plan ? (
             <p className="empty-text">
               Generate a plan to see your warm-up, focus blocks, breaks, and
