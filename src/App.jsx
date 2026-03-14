@@ -242,6 +242,18 @@ function getRecommendationReason(completedSessions, currentTask, currentMood, cu
   return "Based on your overall completed session history so far.";
 }
 
+async function generateAIPlan(inputs) {
+  await new Promise((resolve) => setTimeout(resolve, 900));
+
+  const fallbackPlan = generatePlan(inputs);
+
+  return {
+    plan: fallbackPlan,
+    source: "fallback",
+    message: "AI mode is not connected yet, so NeuroMix used Smart Plan instead.",
+  };
+}
+
 function getSoundForStep({ stepType, mode, mood, task, text }) {
   if (stepType === "warmup") {
     if (mode === "recovery") {
