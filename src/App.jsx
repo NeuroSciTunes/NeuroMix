@@ -1798,6 +1798,32 @@ export default function App() {
               </div>
             </div>
 
+            <div className="generation-toggle">
+              <div className="generation-toggle-label">Plan Generation</div>
+
+              <div className="generation-toggle-row">
+                <button
+                  type="button"
+                  className={`generation-pill ${planGenerationMode === "smart" ? "generation-pill-active" : ""}`}
+                  onClick={() => setPlanGenerationMode("smart")}
+                >
+                  Smart Plan
+                </button>
+
+                <button
+                  type="button"
+                  className={`generation-pill ${planGenerationMode === "ai" ? "generation-pill-active" : ""}`}
+                  onClick={() => setPlanGenerationMode("ai")}
+                >
+                  AI Plan
+                </button>
+              </div>
+
+              <p className="mini-text" style={{ marginTop: 10 }}>
+                Smart Plan uses your built-in NeuroMix logic. AI Plan is structured for a future GPT-powered generator and currently falls back safely.
+              </p>
+            </div>
+
             <div className="mode-grid">
               {Object.entries(modeOptions).map(([key, option]) => (
                 <button
