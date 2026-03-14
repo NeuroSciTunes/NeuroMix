@@ -1911,8 +1911,16 @@ export default function App() {
             </div>
 
             <div className="button-row">
-              <button className="primary" onClick={handleGeneratePlan}>
-                Generate Plan
+              <button
+                className="primary"
+                onClick={handleGeneratePlan}
+                disabled={isGeneratingPlan}
+              >
+                {isGeneratingPlan
+                  ? "Generating..."
+                  : planGenerationMode === "ai"
+                    ? "Generate AI Plan"
+                    : "Generate Plan"}
               </button>
               <button className="secondary" onClick={handleClear}>
                 Clear
