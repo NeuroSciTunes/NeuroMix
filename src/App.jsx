@@ -1,33 +1,40 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
-import {
-  DndContext,
-  closestCenter
-} from "@dnd-kit/core";
+import { DndContext, closestCenter } from "@dnd-kit/core";
 
 import {
   arrayMove,
   SortableContext,
   useSortable,
-  verticalListSortingStrategy
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
 import { CSS } from "@dnd-kit/utilities";
 
 import warmupAmbient from "./assets/warmup_ambient.mp3";
+import warmupSoft from "./assets/warmup_soft_1.mp3";
+import warmupSoft2 from "./assets/warmup_soft_2.mp3";
+
 import focusFlow from "./assets/focus_flow.mp3";
+import creativeFlow2 from "./assets/creative_flow_2.mp3";
+
 import deepFocus from "./assets/deep_focus.mp3";
+import deepFocus2 from "./assets/deep_focus_2.mp3";
+import focusDrone1 from "./assets/focus_drone_1.mp3";
+import focusDrone2 from "./assets/focus_drone_2.mp3";
+
 import breakReset from "./assets/break_reset.mp3";
+import breakBreathing1 from "./assets/break_breathing_1.mp3";
+import breakBreathing2 from "./assets/break_breathing_2.mp3";
+
 import calmReset from "./assets/calm_reset.mp3";
+import calmReset2 from "./assets/calm_reset_2.mp3";
+
 import cooldownPiano from "./assets/cooldown_piano.mp3";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
-}
-
-function minLabel(m) {
-  return `${m} min`;
 }
 
 function formatTime(totalSeconds) {
@@ -83,7 +90,9 @@ function getLast7DaysData(completedSessions) {
 function getCurrentStreak(completedSessions) {
   if (!completedSessions.length) return 0;
 
-  const uniqueDays = [...new Set(completedSessions.map((s) => toDateKey(s.completedAt)))].sort();
+  const uniqueDays = [
+    ...new Set(completedSessions.map((s) => toDateKey(s.completedAt))),
+  ].sort();
   const daySet = new Set(uniqueDays);
 
   let streak = 0;
@@ -105,7 +114,10 @@ function getCurrentStreak(completedSessions) {
 function getBestStreak(completedSessions) {
   if (!completedSessions.length) return 0;
 
-  const uniqueDays = [...new Set(completedSessions.map((s) => toDateKey(s.completedAt)))].sort();
+  const uniqueDays = [
+    ...new Set(completedSessions.map((s) => toDateKey(s.completedAt))),
+  ].sort();
+
   if (!uniqueDays.length) return 0;
 
   let best = 1;
@@ -129,7 +141,9 @@ function getBestStreak(completedSessions) {
 
 function getSessionsToday(completedSessions) {
   const todayKey = toDateKey(new Date());
-  return completedSessions.filter((s) => toDateKey(s.completedAt) === todayKey).length;
+  return completedSessions.filter(
+    (s) => toDateKey(s.completedAt) === todayKey
+  ).length;
 }
 
 function getFavoriteMode(completedSessions) {
@@ -175,7 +189,12 @@ function getAverageCompletedMinutes(completedSessions) {
   return Math.round(total / completedSessions.length);
 }
 
-function getRecommendedMinutes(completedSessions, currentTask, currentMood, currentEnergy) {
+function getRecommendedMinutes(
+  completedSessions,
+  currentTask,
+  currentMood,
+  currentEnergy
+) {
   if (!completedSessions.length) return 45;
 
   const matchingSessions = completedSessions.filter(
@@ -185,7 +204,8 @@ function getRecommendedMinutes(completedSessions, currentTask, currentMood, curr
       session.energy === currentEnergy
   );
 
-  const source = matchingSessions.length >= 2 ? matchingSessions : completedSessions;
+  const source =
+    matchingSessions.length >= 2 ? matchingSessions : completedSessions;
 
   const avg =
     source.reduce((sum, session) => sum + Number(session.minutes || 0), 0) /
@@ -202,7 +222,9 @@ function getRecommendedMinutes(completedSessions, currentTask, currentMood, curr
 function getRecommendedMode(completedSessions, currentTask) {
   if (!completedSessions.length) return null;
 
-  const taskMatches = completedSessions.filter((session) => session.task === currentTask);
+  const taskMatches = completedSessions.filter(
+    (session) => session.task === currentTask
+  );
   const source = taskMatches.length ? taskMatches : completedSessions;
 
   const counts = source.reduce((acc, session) => {
@@ -223,7 +245,12 @@ function getRecommendedMode(completedSessions, currentTask) {
   return bestMode;
 }
 
-function getRecommendationReason(completedSessions, currentTask, currentMood, currentEnergy) {
+function getRecommendationReason(
+  completedSessions,
+  currentTask,
+  currentMood,
+  currentEnergy
+) {
   if (!completedSessions.length) {
     return "Start with a balanced session length and adjust as you build history.";
   }
@@ -387,7 +414,15 @@ function createStepTemplate(stepType, mode, mood, task, text = "") {
   };
 }
 
-function generatePlan({ task, mood, energy, minutes, situation, mode, planStyle }) {
+function generatePlan({
+  task,
+  mood,
+  energy,
+  minutes,
+  situation,
+  mode,
+  planStyle,
+}) {
   const total = clamp(Number(minutes) || 0, 10, 240);
   const text = (situation || "").toLowerCase();
 
@@ -395,8 +430,8 @@ function generatePlan({ task, mood, energy, minutes, situation, mode, planStyle 
     mood === "anxious" || text.includes("overwhelmed")
       ? 5
       : mood === "tired"
-        ? 4
-        : 3;
+      ? 4
+      : 3;
 
   let cooldown = mood === "anxious" ? 4 : 3;
 
@@ -507,7 +542,8 @@ function generatePlan({ task, mood, energy, minutes, situation, mode, planStyle 
   }
 
   if (mode === "gentle") {
-    warmupPrompt += " Keep this session easy to enter. The goal is simply to begin.";
+    warmupPrompt +=
+      " Keep this session easy to enter. The goal is simply to begin.";
   }
 
   if (mode === "lockin") {
@@ -570,23 +606,31 @@ function generatePlan({ task, mood, energy, minutes, situation, mode, planStyle 
     }
 
     if (planStyle === "cars") {
-      focusPrompt = "Read actively, stay present with the passage, and avoid rushing ahead.";
+      focusPrompt =
+        "Read actively, stay present with the passage, and avoid rushing ahead.";
     } else if (planStyle === "mcatProblemSolving") {
-      focusPrompt = "Work through each question carefully, then review the logic behind every answer choice.";
+      focusPrompt =
+        "Work through each question carefully, then review the logic behind every answer choice.";
     } else if (planStyle === "activeRecall") {
-      focusPrompt = "Test yourself out loud, retrieve from memory, and only then check your notes.";
+      focusPrompt =
+        "Test yourself out loud, retrieve from memory, and only then check your notes.";
     } else if (planStyle === "memorization") {
-      focusPrompt = "Keep the pace light and consistent. Prioritize recall over rereading.";
+      focusPrompt =
+        "Keep the pace light and consistent. Prioritize recall over rereading.";
     } else if (planStyle === "reviewMistakes") {
-      focusPrompt = "Review missed questions calmly. Focus on why the right answer is right and why your original choice was wrong.";
+      focusPrompt =
+        "Review missed questions calmly. Focus on why the right answer is right and why your original choice was wrong.";
     } else if (planStyle === "writing") {
-      focusPrompt = "Keep drafting. Do not stop to perfect sentences while momentum is building.";
+      focusPrompt =
+        "Keep drafting. Do not stop to perfect sentences while momentum is building.";
     } else if (planStyle === "overwhelmedReset") {
-      focusPrompt = "Choose one tiny task and finish only that. The goal is to re-enter, not be perfect.";
+      focusPrompt =
+        "Choose one tiny task and finish only that. The goal is to re-enter, not be perfect.";
     }
 
     if (text.includes("biochem")) {
-      focusPrompt += " Focus on mechanisms, pathways, and testing yourself out loud.";
+      focusPrompt +=
+        " Focus on mechanisms, pathways, and testing yourself out loud.";
     }
 
     if (text.includes("paper") || text.includes("essay")) {
@@ -602,7 +646,8 @@ function generatePlan({ task, mood, energy, minutes, situation, mode, planStyle 
     }
 
     if (mode === "deepwork") {
-      focusPrompt += " Protect depth. Avoid interruptions and stay with the problem longer.";
+      focusPrompt +=
+        " Protect depth. Avoid interruptions and stay with the problem longer.";
     }
 
     if (mode === "gentle") {
@@ -730,6 +775,24 @@ function generatePlan({ task, mood, energy, minutes, situation, mode, planStyle 
   return steps;
 }
 
+function migratePlanWithIds(planArray = []) {
+  return planArray.map((step) =>
+    step.id
+      ? step
+      : {
+          ...step,
+          id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        }
+  );
+}
+
+function migrateSessionCollection(collection = []) {
+  return collection.map((session) => ({
+    ...session,
+    plan: migratePlanWithIds(session.plan || []),
+  }));
+}
+
 function SortableStepCard({
   id,
   step,
@@ -739,20 +802,14 @@ function SortableStepCard({
   onDelete,
   onFieldChange,
   onSave,
-  onCancel
+  onCancel,
 }) {
-
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition
-  } = useSortable({ id });
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition
+    transition,
   };
 
   return (
@@ -761,7 +818,6 @@ function SortableStepCard({
       style={style}
       className={`step-card ${isActive ? "active-step" : ""}`}
     >
-
       <div className="drag-handle" {...attributes} {...listeners}>
         ☰
       </div>
@@ -778,9 +834,7 @@ function SortableStepCard({
 
           <div className="step-prompt">{step.prompt}</div>
 
-          <div className="step-sound-chip">
-            Sound: {step.soundTitle}
-          </div>
+          <div className="step-sound-chip">Sound: {step.soundTitle}</div>
 
           <div className="button-row compact-row">
             <button className="secondary" onClick={onEdit}>
@@ -794,20 +848,18 @@ function SortableStepCard({
         </>
       ) : (
         <div className="edit-panel">
-
           <label>
             <span>Type</span>
 
             <select
               value={step.type}
-              onChange={(e)=>onFieldChange("type",e.target.value)}
+              onChange={(e) => onFieldChange("type", e.target.value)}
             >
               <option value="warmup">Warmup</option>
               <option value="focus">Focus</option>
               <option value="break">Break</option>
               <option value="cooldown">Cooldown</option>
             </select>
-
           </label>
 
           <label>
@@ -815,7 +867,7 @@ function SortableStepCard({
 
             <input
               value={step.title}
-              onChange={(e)=>onFieldChange("title",e.target.value)}
+              onChange={(e) => onFieldChange("title", e.target.value)}
             />
           </label>
 
@@ -825,7 +877,7 @@ function SortableStepCard({
             <input
               type="number"
               value={step.minutes}
-              onChange={(e)=>onFieldChange("minutes",e.target.value)}
+              onChange={(e) => onFieldChange("minutes", e.target.value)}
             />
           </label>
 
@@ -835,7 +887,7 @@ function SortableStepCard({
             <textarea
               rows={3}
               value={step.prompt}
-              onChange={(e)=>onFieldChange("prompt",e.target.value)}
+              onChange={(e) => onFieldChange("prompt", e.target.value)}
             />
           </label>
 
@@ -848,10 +900,8 @@ function SortableStepCard({
               Cancel
             </button>
           </div>
-
         </div>
       )}
-
     </div>
   );
 }
@@ -867,6 +917,16 @@ function RecentSessionCard({ session, onLoad }) {
       </div>
 
       <div className="recent-mode">{session.modeLabel || "Lock In"}</div>
+
+      {session.templateName && (
+        <div className="recent-situation">Template: {session.templateName}</div>
+      )}
+
+      {session.generationMode && (
+        <div className="recent-situation">
+          Generation: {session.generationMode === "ai" ? "AI Plan" : "Smart Plan"}
+        </div>
+      )}
 
       {session.situation ? (
         <div className="recent-situation">{session.situation}</div>
@@ -894,6 +954,16 @@ function FavoriteSessionCard({ session, onLoad, onRemove }) {
       </div>
 
       <div className="recent-mode">{session.modeLabel || "Lock In"}</div>
+
+      {session.templateName && (
+        <div className="recent-situation">Template: {session.templateName}</div>
+      )}
+
+      {session.generationMode && (
+        <div className="recent-situation">
+          Generation: {session.generationMode === "ai" ? "AI Plan" : "Smart Plan"}
+        </div>
+      )}
 
       {session.situation ? (
         <div className="recent-situation">{session.situation}</div>
@@ -927,6 +997,14 @@ function PresetCard({ preset, onLoad, onRemove }) {
 
       <div className="recent-situation">
         {preset.task} • {preset.mood} • {preset.energy} • {preset.minutes} min
+      </div>
+
+      {preset.templateName && (
+        <div className="recent-situation">Template: {preset.templateName}</div>
+      )}
+
+      <div className="recent-situation">
+        Generation: {preset.generationMode === "ai" ? "AI Plan" : "Smart Plan"}
       </div>
 
       {preset.situation ? (
@@ -1113,7 +1191,9 @@ export default function App() {
   );
 
   const selectedTemplate = useMemo(
-    () => studyTemplates.find((template) => template.id === selectedTemplateId) || null,
+    () =>
+      studyTemplates.find((template) => template.id === selectedTemplateId) ||
+      null,
     [selectedTemplateId]
   );
 
@@ -1161,7 +1241,8 @@ export default function App() {
   const sessionsToday = getSessionsToday(completedSessions);
   const last7Days = getLast7DaysData(completedSessions);
 
-  const averageCompletedMinutes = getAverageCompletedMinutes(completedSessions);
+  const averageCompletedMinutes =
+    getAverageCompletedMinutes(completedSessions);
 
   const recommendedMinutes = getRecommendedMinutes(
     completedSessions,
@@ -1199,15 +1280,24 @@ export default function App() {
 
     if (savedPlan) {
       const parsed = JSON.parse(savedPlan);
-      const migrated = parsed.map((step) =>
-        step.id ? step : { ...step, id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` }
-      );
-      setPlan(migrated);
+      setPlan(migratePlanWithIds(parsed));
     }
-    if (savedRecent) setRecentSessions(JSON.parse(savedRecent));
-    if (savedFavorites) setFavoriteSessions(JSON.parse(savedFavorites));
-    if (savedCompleted) setCompletedSessions(JSON.parse(savedCompleted));
-    if (savedPresets) setPresets(JSON.parse(savedPresets));
+
+    if (savedRecent) {
+      setRecentSessions(migrateSessionCollection(JSON.parse(savedRecent)));
+    }
+
+    if (savedFavorites) {
+      setFavoriteSessions(migrateSessionCollection(JSON.parse(savedFavorites)));
+    }
+
+    if (savedCompleted) {
+      setCompletedSessions(migrateSessionCollection(JSON.parse(savedCompleted)));
+    }
+
+    if (savedPresets) {
+      setPresets(JSON.parse(savedPresets));
+    }
   }, []);
 
   useEffect(() => {
@@ -1316,6 +1406,7 @@ export default function App() {
       situation,
       selectedTemplateId,
       templateName: selectedTemplate?.name || null,
+      generationMode: planGenerationMode,
       plan,
     };
   }
@@ -1379,9 +1470,7 @@ export default function App() {
   }
 
   function handleLoadSession(session) {
-    const migratedPlan = (session.plan || []).map((step) =>
-      step.id ? step : { ...step, id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` }
-    );
+    const migratedPlan = migratePlanWithIds(session.plan || []);
 
     setTask(session.task);
     setMood(session.mood);
@@ -1391,6 +1480,7 @@ export default function App() {
     setMode(session.mode || "lockin");
     setPlan(migratedPlan);
     setSelectedTemplateId(session.selectedTemplateId || null);
+    setPlanGenerationMode(session.generationMode || "smart");
     setCurrentStepIndex(0);
     setSessionStarted(false);
     setIsRunning(false);
@@ -1416,6 +1506,9 @@ export default function App() {
       mode,
       modeLabel: modeOptions[mode].label,
       situation,
+      selectedTemplateId,
+      templateName: selectedTemplate?.name || null,
+      generationMode: planGenerationMode,
     };
 
     setPresets((prev) => [preset, ...prev].slice(0, 12));
@@ -1430,6 +1523,8 @@ export default function App() {
     setMinutes(preset.minutes);
     setMode(preset.mode);
     setSituation(preset.situation || "");
+    setSelectedTemplateId(preset.selectedTemplateId || null);
+    setPlanGenerationMode(preset.generationMode || "smart");
     setShowPresetBanner(false);
   }
 
@@ -1541,6 +1636,7 @@ export default function App() {
     setShowFavoritedBanner(false);
     setEditingIndex(null);
     setDraftStep(null);
+    setPlanError("");
     localStorage.removeItem("neuromix_plan");
 
     const audio = audioRef.current;
@@ -1757,7 +1853,9 @@ export default function App() {
               {last7Days.map((day) => (
                 <div
                   key={day.key}
-                  className={`activity-day ${day.count > 0 ? "active-day" : ""} ${day.isToday ? "today-day" : ""}`}
+                  className={`activity-day ${day.count > 0 ? "active-day" : ""} ${
+                    day.isToday ? "today-day" : ""
+                  }`}
                 >
                   <div className="activity-label">{day.label}</div>
                   <div className="activity-count">{day.count}</div>
@@ -1779,7 +1877,8 @@ export default function App() {
               <div className="template-section-header">
                 <h3 className="template-title">Study Templates</h3>
                 <p className="template-subtitle">
-                  Quick-start sessions for MCAT prep, writing, review, and low-energy study blocks.
+                  Quick-start sessions for MCAT prep, writing, review, and
+                  low-energy study blocks.
                 </p>
               </div>
 
@@ -1788,11 +1887,17 @@ export default function App() {
                   <button
                     key={template.id}
                     type="button"
-                    className={`template-card ${selectedTemplateId === template.id ? "template-card-active" : ""}`}
+                    className={`template-card ${
+                      selectedTemplateId === template.id
+                        ? "template-card-active"
+                        : ""
+                    }`}
                     onClick={() => handleApplyTemplate(template)}
                   >
                     <div className="template-card-title">{template.name}</div>
-                    <div className="template-card-description">{template.description}</div>
+                    <div className="template-card-description">
+                      {template.description}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -1804,7 +1909,11 @@ export default function App() {
               <div className="generation-toggle-row">
                 <button
                   type="button"
-                  className={`generation-pill ${planGenerationMode === "smart" ? "generation-pill-active" : ""}`}
+                  className={`generation-pill ${
+                    planGenerationMode === "smart"
+                      ? "generation-pill-active"
+                      : ""
+                  }`}
                   onClick={() => setPlanGenerationMode("smart")}
                 >
                   Smart Plan
@@ -1812,7 +1921,11 @@ export default function App() {
 
                 <button
                   type="button"
-                  className={`generation-pill ${planGenerationMode === "ai" ? "generation-pill-active" : ""}`}
+                  className={`generation-pill ${
+                    planGenerationMode === "ai"
+                      ? "generation-pill-active"
+                      : ""
+                  }`}
                   onClick={() => setPlanGenerationMode("ai")}
                 >
                   AI Plan
@@ -1820,7 +1933,9 @@ export default function App() {
               </div>
 
               <p className="mini-text" style={{ marginTop: 10 }}>
-                Smart Plan uses your built-in NeuroMix logic. AI Plan is structured for a future GPT-powered generator and currently falls back safely.
+                Smart Plan uses your built-in NeuroMix logic. AI Plan is
+                structured for a future GPT-powered generator and currently
+                falls back safely.
               </p>
             </div>
 
@@ -1829,7 +1944,9 @@ export default function App() {
                 <button
                   key={key}
                   type="button"
-                  className={`mode-card ${mode === key ? "mode-card-active" : ""}`}
+                  className={`mode-card ${
+                    mode === key ? "mode-card-active" : ""
+                  }`}
                   onClick={() => setMode(key)}
                 >
                   <div className="mode-title">{option.label}</div>
@@ -1862,7 +1979,10 @@ export default function App() {
 
               <label>
                 <span>Energy</span>
-                <select value={energy} onChange={(e) => setEnergy(e.target.value)}>
+                <select
+                  value={energy}
+                  onChange={(e) => setEnergy(e.target.value)}
+                >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
@@ -1919,9 +2039,10 @@ export default function App() {
                 {isGeneratingPlan
                   ? "Generating..."
                   : planGenerationMode === "ai"
-                    ? "Generate AI Plan"
-                    : "Generate Plan"}
+                  ? "Generate AI Plan"
+                  : "Generate Plan"}
               </button>
+
               <button className="secondary" onClick={handleClear}>
                 Clear
               </button>
@@ -1967,16 +2088,21 @@ export default function App() {
             )}
 
             <p className="mini-text" style={{ marginTop: 12 }}>
-              Generation Mode: <strong>{planGenerationMode === "ai" ? "AI Plan" : "Smart Plan"}</strong>
+              Generation Mode:{" "}
+              <strong>
+                {planGenerationMode === "ai" ? "AI Plan" : "Smart Plan"}
+              </strong>
             </p>
 
             <div className="recommendation-card">
               <div className="recommendation-label">Neuro Recommendation</div>
+
               <div className="recommendation-main">
                 Try <strong>{recommendedMinutes} minutes</strong>
                 {recommendedMode ? (
                   <>
-                    {" "}in <strong>{modeOptions[recommendedMode].label}</strong>
+                    {" "}
+                    in <strong>{modeOptions[recommendedMode].label}</strong>
                   </>
                 ) : null}
               </div>
@@ -1987,7 +2113,8 @@ export default function App() {
 
               {completedSessions.length > 0 && (
                 <p className="mini-text" style={{ marginTop: 8 }}>
-                  Average completed session length: <strong>{averageCompletedMinutes} min</strong>
+                  Average completed session length:{" "}
+                  <strong>{averageCompletedMinutes} min</strong>
                 </p>
               )}
 
@@ -2046,7 +2173,8 @@ export default function App() {
 
           {favoriteSessions.length === 0 ? (
             <p className="empty-text">
-              No favorites yet. Generate a session and save one you want to reuse.
+              No favorites yet. Generate a session and save one you want to
+              reuse.
             </p>
           ) : (
             <div className="recent-grid">
@@ -2103,9 +2231,7 @@ export default function App() {
             <div className="favorited-banner">Session saved to favorites.</div>
           )}
 
-          {planError && (
-            <div className="plan-info-banner">{planError}</div>
-          )}
+          {planError && <div className="plan-info-banner">{planError}</div>}
 
           {!plan ? (
             <p className="empty-text">
@@ -2120,16 +2246,28 @@ export default function App() {
                 </p>
 
                 <div className="add-step-row">
-                  <button className="secondary" onClick={() => handleAddStep("warmup")}>
+                  <button
+                    className="secondary"
+                    onClick={() => handleAddStep("warmup")}
+                  >
                     + Warm-up
                   </button>
-                  <button className="secondary" onClick={() => handleAddStep("focus")}>
+                  <button
+                    className="secondary"
+                    onClick={() => handleAddStep("focus")}
+                  >
                     + Focus
                   </button>
-                  <button className="secondary" onClick={() => handleAddStep("break")}>
+                  <button
+                    className="secondary"
+                    onClick={() => handleAddStep("break")}
+                  >
                     + Break
                   </button>
-                  <button className="secondary" onClick={() => handleAddStep("cooldown")}>
+                  <button
+                    className="secondary"
+                    onClick={() => handleAddStep("cooldown")}
+                  >
                     + Cool-down
                   </button>
                 </div>
@@ -2149,35 +2287,27 @@ export default function App() {
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
-
                 <SortableContext
                   items={plan.map((step) => step.id)}
                   strategy={verticalListSortingStrategy}
                 >
-
                   <div className="step-list">
-
-                    {plan.map((step,index)=>(
+                    {plan.map((step, index) => (
                       <SortableStepCard
                         key={step.id}
                         id={step.id}
-                        step={editingIndex===index?draftStep:step}
-                        isActive={sessionStarted && index===currentStepIndex}
-                        isEditing={editingIndex===index}
-
-                        onEdit={()=>handleEditStep(index)}
-                        onDelete={()=>handleDeleteStep(index)}
-
+                        step={editingIndex === index ? draftStep : step}
+                        isActive={sessionStarted && index === currentStepIndex}
+                        isEditing={editingIndex === index}
+                        onEdit={() => handleEditStep(index)}
+                        onDelete={() => handleDeleteStep(index)}
                         onFieldChange={handleStepFieldChange}
                         onSave={handleSaveStep}
                         onCancel={handleCancelEdit}
                       />
                     ))}
-
                   </div>
-
                 </SortableContext>
-
               </DndContext>
             </>
           )}
@@ -2251,7 +2381,9 @@ export default function App() {
                             max="1"
                             step="0.01"
                             value={audioVolume}
-                            onChange={(e) => setAudioVolume(Number(e.target.value))}
+                            onChange={(e) =>
+                              setAudioVolume(Number(e.target.value))
+                            }
                           />
                         </label>
                       </div>
