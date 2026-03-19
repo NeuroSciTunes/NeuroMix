@@ -387,7 +387,7 @@ async function generateAIPlan(inputs) {
       })
       .join("\n");
 
-    const response = await fetch("/api/generate-plan", {
+    const response = await fetch("https://neuromix-production.up.railway.app/api/generate-plan", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
