@@ -1365,6 +1365,18 @@ export default function App() {
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackHistory, setFeedbackHistory] = useState([]);
 
+  const [activeTab, setActiveTab] = useState("home");
+  const [tabFading, setTabFading] = useState(false);
+  const [showMcatDropdown, setShowMcatDropdown] = useState(false);
+
+  function switchTab(tab) {
+    setTabFading(true);
+    setTimeout(() => {
+      setActiveTab(tab);
+      setTabFading(false);
+    }, 180);
+  }
+
   const audioRef = useRef(null);
 
   const modeOptions = {
@@ -2144,832 +2156,672 @@ export default function App() {
       <header className="topbar">
         <div className="topbar-inner">
           <div className="logo">
-            NeuroSci<span className="logo-accent">Tunes</span>
+            Neuro<span className="logo-accent">Mix</span>
           </div>
         </div>
       </header>
 
-      <main className="container">
-        <section className="hero">
-          <div className="eyebrow">Where Music Meets the Mind</div>
-          <h1>Build focus sessions designed for your brain state</h1>
-          <p className="subtitle">
-            NeuroMix helps you turn overwhelm into action by generating a guided
-            session based on your mood, energy, mode, task, available time, and
-            what's actually going on.
-          </p>
+      <nav className="bottom-nav">
+        <button
+          className={`nav-item ${activeTab === "home" ? "nav-item-active" : ""}`}
+          onClick={() => switchTab("home")}
+        >
+          <span className="nav-icon">⌂</span>
+          <span className="nav-label">Home</span>
+        </button>
+        <button
+          className={`nav-item ${activeTab === "build" ? "nav-item-active" : ""}`}
+          onClick={() => switchTab("build")}
+        >
+          <span className="nav-icon">◈</span>
+          <span className="nav-label">Build</span>
+        </button>
+        <button
+          className={`nav-item ${activeTab === "session" ? "nav-item-active" : ""}`}
+          onClick={() => switchTab("session")}
+        >
+          <span className="nav-icon">▶</span>
+          <span className="nav-label">Session</span>
+          {isRunning && <span className="nav-live-dot" />}
+        </button>
+        <button
+          className={`nav-item ${activeTab === "history" ? "nav-item-active" : ""}`}
+          onClick={() => switchTab("history")}
+        >
+          <span className="nav-icon">≡</span>
+          <span className="nav-label">History</span>
+        </button>
+      </nav>
 
-          <div className="hero-actions">
-            <button
-              className="hero-btn hero-btn-light"
-              onClick={() => {
-                document
-                  .getElementById("session-builder")
-                  ?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              Build a Session
-            </button>
-          </div>
-        </section>
-
-        <section className="card stats-card">
-          <div className="section-row">
-            <h2>Your Progress</h2>
-            {completedSessions.length > 0 && (
-              <button className="secondary" onClick={handleClearCompletedSessions}>
-                Clear Completed
-              </button>
-            )}
-          </div>
-
-          <div className="quick-stats four-up">
-            <div className="stat-box">
-              <div className="stat-label">Current Streak</div>
-              <div className="stat-value">{currentStreak}</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-label">Best Streak</div>
-              <div className="stat-value">{bestStreak}</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-label">Sessions Today</div>
-              <div className="stat-value">{sessionsToday}</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-label">Favorite Mode</div>
-              <div className="stat-value">{favoriteMode}</div>
-            </div>
-          </div>
-
-          <div className="quick-stats two-up" style={{ marginTop: 10 }}>
-            <div className="stat-box">
-              <div className="stat-label">Completed Sessions</div>
-              <div className="stat-value">{totalCompletedSessions}</div>
-            </div>
-            <div className="stat-box">
-              <div className="stat-label">Total Focus Minutes</div>
-              <div className="stat-value">{totalFocusMinutes}</div>
-            </div>
-          </div>
-
-          <div className="activity-strip">
-            <div className="activity-title">Last 7 Days</div>
-            <div className="activity-grid">
-              {last7Days.map((day) => (
-                <div
-                  key={day.key}
-                  className={`activity-day ${day.count > 0 ? "active-day" : ""} ${
-                    day.isToday ? "today-day" : ""
-                  }`}
-                >
-                  <div className="activity-label">{day.label}</div>
-                  <div className="activity-count">{day.count}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <div className="grid">
-          <section className="card" id="session-builder">
-            <h2>Session Builder</h2>
-            <p className="section-copy">
-              Choose your mode, then tell NeuroMix how you feel, what you need
-              to do, and how much time you have.
-            </p>
-
-            <div className="template-section">
-              <div className="template-section-header">
-                <h3 className="template-title">Study Templates</h3>
-                <p className="template-subtitle">
-                  Quick-start sessions for MCAT prep, writing, review, and
-                  low-energy study blocks.
-                </p>
-              </div>
-
-              <div className="template-grid">
-                {studyTemplates.map((template) => (
-                  <button
-                    key={template.id}
-                    type="button"
-                    className={`template-card ${
-                      selectedTemplateId === template.id
-                        ? "template-card-active"
-                        : ""
-                    }`}
-                    onClick={() => handleApplyTemplate(template)}
-                  >
-                    <div className="template-card-title">{template.name}</div>
-                    <div className="template-card-description">
-                      {template.description}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="generation-toggle">
-              <div className="generation-toggle-label">Plan Generation</div>
-
-              <div className="generation-toggle-row">
+      <main className="container tab-container">
+        <div className={`tab-fade ${tabFading ? "tab-fading" : ""}`}>
+        {/* ── HOME TAB ── */}
+        {activeTab === "home" && (
+          <div className="tab-screen">
+            <section className="hero">
+              <div className="eyebrow">Where Music Meets the Mind</div>
+              <h1>Build focus sessions for your brain state</h1>
+              <p className="subtitle">
+                Tell NeuroMix how you feel and what you need — get a guided session designed for you.
+              </p>
+              <div className="hero-actions">
                 <button
-                  type="button"
-                  className={`generation-pill ${
-                    planGenerationMode === "smart"
-                      ? "generation-pill-active"
-                      : ""
-                  }`}
-                  onClick={() => setPlanGenerationMode("smart")}
+                  className="hero-btn hero-btn-light"
+                  onClick={() => switchTab("build")}
                 >
-                  Smart Plan
-                </button>
-
-                <button
-                  type="button"
-                  className={`generation-pill ${
-                    planGenerationMode === "ai"
-                      ? "generation-pill-active"
-                      : ""
-                  }`}
-                  onClick={() => setPlanGenerationMode("ai")}
-                >
-                  AI Plan
+                  Build a Session →
                 </button>
               </div>
+            </section>
 
-              <p className="mini-text" style={{ marginTop: 10 }}>
-                Smart Plan uses your built-in NeuroMix logic. AI Plan is
-                structured for a future GPT-powered generator and currently
-                falls back safely.
-              </p>
-            </div>
-
-            <div className="mode-grid">
-              {Object.entries(modeOptions).map(([key, option]) => (
-                <button
-                  key={key}
-                  type="button"
-                  className={`mode-card ${
-                    mode === key ? "mode-card-active" : ""
-                  }`}
-                  onClick={() => setMode(key)}
-                >
-                  <div className="mode-title">{option.label}</div>
-                  <div className="mode-description">{option.description}</div>
-                </button>
-              ))}
-            </div>
-
-            <div className="form-grid">
-              <label>
-                <span>Task</span>
-                <select value={task} onChange={(e) => setTask(e.target.value)}>
-                  <option value="studying">Studying</option>
-                  <option value="writing">Writing</option>
-                  <option value="creative">Creative</option>
-                  <option value="admin">Admin / chores</option>
-                  <option value="mcat">MCAT</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Mood</span>
-                <select value={mood} onChange={(e) => setMood(e.target.value)}>
-                  <option value="anxious">Anxious</option>
-                  <option value="neutral">Neutral</option>
-                  <option value="tired">Tired</option>
-                  <option value="motivated">Motivated</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Energy</span>
-                <select
-                  value={energy}
-                  onChange={(e) => setEnergy(e.target.value)}
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </label>
-
-              <label>
-                <span>Minutes</span>
-                <input
-                  type="number"
-                  min={10}
-                  max={240}
-                  value={minutes}
-                  onChange={(e) => setMinutes(e.target.value)}
-                />
-              </label>
-            </div>
-
-            <label style={{ marginTop: 14 }}>
-              <span>Describe your situation</span>
-              <textarea
-                value={situation}
-                onChange={(e) => setSituation(e.target.value)}
-                placeholder="Example: I'm overwhelmed and need to study biochem for 45 minutes without spiraling."
-                rows={4}
-                className="situation-box"
-              />
-            </label>
-
-            <div className="preset-builder">
-              <label>
-                <span>Preset Name</span>
-                <input
-                  type="text"
-                  value={presetName}
-                  onChange={(e) => setPresetName(e.target.value)}
-                  placeholder="Example: MCAT Deep Work 90"
-                />
-              </label>
-
-              <div className="button-row compact-row">
-                <button className="secondary" onClick={handleSavePreset}>
-                  Save Preset
-                </button>
-              </div>
-            </div>
-
-            <div className="button-row">
-              <button
-                className="primary"
-                onClick={handleGeneratePlan}
-                disabled={isGeneratingPlan}
-              >
-                {isGeneratingPlan
-                  ? "Generating..."
-                  : planGenerationMode === "ai"
-                  ? "Generate AI Plan"
-                  : "Generate Plan"}
-              </button>
-
-              <button className="secondary" onClick={handleClear}>
-                Clear
-              </button>
-            </div>
-          </section>
-
-          <section className="card">
-            <h2>Quick Overview</h2>
-            <p className="section-copy">
-              NeuroMix now uses modes to shape the structure of your session, not
-              just the text prompts.
-            </p>
-
-            <div className="quick-stats">
-              <div className="stat-box">
-                <div className="stat-label">Mode</div>
-                <div className="stat-value">{modeOptions[mode].label}</div>
-              </div>
-              <div className="stat-box">
-                <div className="stat-label">Task</div>
-                <div className="stat-value">{task}</div>
-              </div>
-              <div className="stat-box">
-                <div className="stat-label">Time</div>
-                <div className="stat-value">{minutes} min</div>
-              </div>
-            </div>
-
-            <p className="mini-text" style={{ marginTop: 16 }}>
-              {modeOptions[mode].description}
-            </p>
-
-            <p className="mini-text" style={{ marginTop: 12 }}>
-              {situation
-                ? `Situation: ${situation}`
-                : "Add a situation to make your session plan feel more personal and context-aware."}
-            </p>
-
-            {selectedTemplate && (
-              <p className="mini-text" style={{ marginTop: 12 }}>
-                Template: <strong>{selectedTemplate.name}</strong>
-              </p>
-            )}
-
-            <p className="mini-text" style={{ marginTop: 12 }}>
-              Generation Mode:{" "}
-              <strong>
-                {planGenerationMode === "ai" ? "AI Plan" : "Smart Plan"}
-              </strong>
-            </p>
-
-            <div className="recommendation-card">
-              <div className="recommendation-label">Neuro Recommendation</div>
-
-              <div className="recommendation-main">
-                Try <strong>{recommendedMinutes} minutes</strong>
-                {recommendedMode ? (
-                  <>
-                    {" "}
-                    in <strong>{modeOptions[recommendedMode].label}</strong>
-                  </>
-                ) : null}
-              </div>
-
-              <p className="mini-text" style={{ marginTop: 8 }}>
-                {recommendationReason}
-              </p>
-
-              {completedSessions.length > 0 && (
-                <p className="mini-text" style={{ marginTop: 8 }}>
-                  Average completed session length:{" "}
-                  <strong>{averageCompletedMinutes} min</strong>
-                </p>
-              )}
-
-              <div className="button-row compact-row" style={{ marginTop: 12 }}>
-                <button className="secondary" onClick={handleApplyRecommendation}>
-                  Apply Recommendation
-                </button>
-              </div>
-            </div>
-
-            <div className="adaptive-card">
-              <div className="recommendation-label">Adaptive Timing</div>
-              <div className="adaptive-main">
-                <strong>{adaptiveTimingProfile.focusBlock} min</strong> focus •{" "}
-                <strong>{adaptiveTimingProfile.shortBreak} min</strong> short break •{" "}
-                <strong>{adaptiveTimingProfile.longBreak} min</strong> long break
-              </div>
-              <p className="mini-text" style={{ marginTop: 8 }}>
-                {adaptiveTimingProfile.reason}
-              </p>
-              <div className="button-row compact-row" style={{ marginTop: 12 }}>
-                <button
-                  className="secondary"
-                  onClick={() => setUseAdaptiveTiming((prev) => !prev)}
-                >
-                  {useAdaptiveTiming ? "Adaptive Timing On" : "Adaptive Timing Off"}
-                </button>
-              </div>
-            </div>
-
-            <div className="adaptive-card">
-              <div className="recommendation-label">Streak Reminders</div>
-              <div className="adaptive-main">
-                Notifications:{" "}
-                <strong>
-                  {notificationsEnabled && notificationPermission === "granted"
-                    ? "On"
-                    : "Off"}
-                </strong>
-              </div>
-              <p className="mini-text" style={{ marginTop: 8 }}>
-                Get a reminder to start a session if you have not completed one today.
-              </p>
-              <div className="button-row compact-row" style={{ marginTop: 12 }}>
-                <button className="secondary" onClick={handleEnableNotifications}>
-                  Enable Notifications
-                </button>
-                <button className="secondary" onClick={handleSendTestNotification}>
-                  Send Test Reminder
-                </button>
-              </div>
-            </div>
-
-            {showPresetBanner && (
-              <div className="favorited-banner" style={{ marginTop: 14 }}>
-                Preset saved.
-              </div>
-            )}
-          </section>
-        </div>
-
-        <section className="card" style={{ marginTop: 18 }}>
-          <div className="section-row">
-            <h2>Saved Presets</h2>
-            {presets.length > 0 && (
-              <button className="secondary" onClick={handleClearPresets}>
-                Clear Presets
-              </button>
-            )}
-          </div>
-
-          {presets.length === 0 ? (
-            <p className="empty-text">
-              No presets yet. Save a setup you use often.
-            </p>
-          ) : (
-            <div className="recent-grid">
-              {presets.map((preset) => (
-                <PresetCard
-                  key={preset.id}
-                  preset={preset}
-                  onLoad={handleLoadPreset}
-                  onRemove={handleRemovePreset}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="card" style={{ marginTop: 18 }}>
-          <div className="section-row">
-            <h2>Favorite Sessions</h2>
-            {favoriteSessions.length > 0 && (
-              <button className="secondary" onClick={handleClearFavoriteSessions}>
-                Clear Favorites
-              </button>
-            )}
-          </div>
-
-          {favoriteSessions.length === 0 ? (
-            <p className="empty-text">
-              No favorites yet. Generate a session and save one you want to
-              reuse.
-            </p>
-          ) : (
-            <div className="recent-grid">
-              {favoriteSessions.map((session) => (
-                <FavoriteSessionCard
-                  key={session.id}
-                  session={session}
-                  onLoad={handleLoadSession}
-                  onRemove={handleRemoveFavorite}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="card" style={{ marginTop: 18 }}>
-          <div className="section-row">
-            <h2>Recent Sessions</h2>
-            {recentSessions.length > 0 && (
-              <button className="secondary" onClick={handleClearRecentSessions}>
-                Clear History
-              </button>
-            )}
-          </div>
-
-          {recentSessions.length === 0 ? (
-            <p className="empty-text">
-              No saved sessions yet. Generate a plan and it will appear here.
-            </p>
-          ) : (
-            <div className="recent-grid">
-              {recentSessions.map((session) => (
-                <RecentSessionCard
-                  key={session.id}
-                  session={session}
-                  onLoad={handleLoadSession}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="card" style={{ marginTop: 18 }}>
-          <div className="section-row">
-            <h2>Session Feedback History</h2>
-            {feedbackHistory.length > 0 && (
-              <button
-                className="secondary"
-                onClick={() => {
-                  setFeedbackHistory([]);
-                  localStorage.removeItem("neuromix_feedback_history");
-                }}
-              >
-                Clear Feedback
-              </button>
-            )}
-          </div>
-
-          {feedbackHistory.length === 0 ? (
-            <p className="empty-text">
-              No feedback yet. Complete a session and rate it — the AI uses this to improve future plans.
-            </p>
-          ) : (
-            <div className="recent-grid">
-              {feedbackHistory.map((f) => (
-                <div key={f.id} className="feedback-history-card">
-                  <div className="recent-top">
-                    <div className="recent-title">
-                      {f.task} • {f.mood} • {f.minutes} min
-                    </div>
-                    <div className="recent-date">{formatSavedDate(f.submittedAt)}</div>
-                  </div>
-                  <div className="recent-mode">{f.mode}</div>
-                  <div className="feedback-history-ratings">
-                    {f.length && (
-                      <span className={`feedback-rating-chip ${f.length === "Just right" ? "chip-good" : "chip-warn"}`}>
-                        Length: {f.length}
-                      </span>
-                    )}
-                    {f.focus && (
-                      <span className={`feedback-rating-chip ${f.focus === "Great" ? "chip-good" : f.focus === "Bad" ? "chip-bad" : "chip-warn"}`}>
-                        Focus: {f.focus}
-                      </span>
-                    )}
-                    {f.music && (
-                      <span className={`feedback-rating-chip ${f.music === "Great" ? "chip-good" : f.music === "Bad" ? "chip-bad" : "chip-warn"}`}>
-                        Music: {f.music}
-                      </span>
-                    )}
-                  </div>
-                  {f.note && (
-                    <p className="feedback-history-note">"{f.note}"</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="card" style={{ marginTop: 18 }}>
-          <div className="section-row">
-            <h2>Generated Session Plan</h2>
-            {plan && (
-              <button className="primary" onClick={handleFavoriteCurrentSession}>
-                Save to Favorites
-              </button>
-            )}
-          </div>
-
-          {showFavoritedBanner && (
-            <div className="favorited-banner">Session saved to favorites.</div>
-          )}
-
-          {planError && <div className="plan-info-banner">{planError}</div>}
-
-          {!plan ? (
-            <p className="empty-text">
-              Generate a plan to see your warm-up, focus blocks, breaks, and
-              cool-down.
-            </p>
-          ) : (
-            <>
-              <div className="section-row" style={{ marginTop: 10 }}>
-                <p className="summary-text">
-                  Total planned: <strong>{totalPlanned} minutes</strong>
-                </p>
-
-                <div className="add-step-row">
-                  <button
-                    className="secondary"
-                    onClick={() => handleAddStep("warmup")}
-                  >
-                    + Warm-up
+            <section className="card stats-card">
+              <div className="section-row">
+                <h2>Your Progress</h2>
+                {completedSessions.length > 0 && (
+                  <button className="secondary" onClick={handleClearCompletedSessions}>
+                    Clear
                   </button>
-                  <button
-                    className="secondary"
-                    onClick={() => handleAddStep("focus")}
-                  >
-                    + Focus
-                  </button>
-                  <button
-                    className="secondary"
-                    onClick={() => handleAddStep("break")}
-                  >
-                    + Break
-                  </button>
-                  <button
-                    className="secondary"
-                    onClick={() => handleAddStep("cooldown")}
-                  >
-                    + Cool-down
-                  </button>
-                </div>
-              </div>
-
-              <p className="mini-text">
-                Current mode: <strong>{modeOptions[mode].label}</strong>
-              </p>
-
-              {situation && (
-                <p className="mini-text">
-                  Based on your situation: <strong>{situation}</strong>
-                </p>
-              )}
-
-              <DndContext
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-              >
-                <SortableContext
-                  items={plan.map((step) => step.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="step-list">
-                    {plan.map((step, index) => (
-                      <SortableStepCard
-                        key={step.id}
-                        id={step.id}
-                        step={editingIndex === index ? draftStep : step}
-                        isActive={sessionStarted && index === currentStepIndex}
-                        isEditing={editingIndex === index}
-                        onEdit={() => handleEditStep(index)}
-                        onDelete={() => handleDeleteStep(index)}
-                        onFieldChange={handleStepFieldChange}
-                        onSave={handleSaveStep}
-                        onCancel={handleCancelEdit}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            </>
-          )}
-        </section>
-
-        {plan && (
-          <section className="card" style={{ marginTop: 18 }}>
-            <h2>Session Runner</h2>
-
-            {showCompletedBanner && (
-              <div className="completed-banner">Session complete. Nice work.</div>
-            )}
-
-            {showFeedbackCard && (
-              <div className="feedback-card">
-                <div className="feedback-title">How did that go?</div>
-
-                <div className="feedback-group">
-                  <div className="feedback-label">Session length</div>
-                  <div className="feedback-options">
-                    {["Too short", "Just right", "Too long"].map((opt) => (
-                      <button
-                        key={opt}
-                        className={`feedback-pill ${feedbackLength === opt ? "feedback-pill-active" : ""}`}
-                        onClick={() => setFeedbackLength(opt)}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="feedback-group">
-                  <div className="feedback-label">Focus quality</div>
-                  <div className="feedback-options">
-                    {["Bad", "Okay", "Great"].map((opt) => (
-                      <button
-                        key={opt}
-                        className={`feedback-pill ${feedbackFocus === opt ? "feedback-pill-active" : ""}`}
-                        onClick={() => setFeedbackFocus(opt)}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="feedback-group">
-                  <div className="feedback-label">Music fit</div>
-                  <div className="feedback-options">
-                    {["Bad", "Okay", "Great"].map((opt) => (
-                      <button
-                        key={opt}
-                        className={`feedback-pill ${feedbackMusic === opt ? "feedback-pill-active" : ""}`}
-                        onClick={() => setFeedbackMusic(opt)}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="feedback-group">
-                  <div className="feedback-label">Optional note</div>
-                  <textarea
-                    className="situation-box"
-                    rows={2}
-                    placeholder="e.g. breaks were too short, warmup helped, got distracted..."
-                    value={feedbackNote}
-                    onChange={(e) => setFeedbackNote(e.target.value)}
-                  />
-                </div>
-
-                <div className="button-row compact-row">
-                  <button className="primary" onClick={handleSubmitFeedback}>
-                    Save Feedback
-                  </button>
-                  <button className="secondary" onClick={handleSkipFeedback}>
-                    Skip
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {!sessionStarted ? (
-              <div className="runner-box">
-                <p className="runner-prompt">
-                  Your {modeOptions[mode].label.toLowerCase()} session is ready.
-                  Start when you're ready to lock in.
-                </p>
-                <button className="primary" onClick={handleStartSession}>
-                  Start Session
-                </button>
-              </div>
-            ) : (
-              <div className="runner-box">
-                <div className="current-step-label">Current Step</div>
-                <div className="current-step-title">
-                  {currentStep ? currentStep.title : "Session Complete"}
-                </div>
-
-                <div className="timer">{formatTime(secondsLeft)}</div>
-
-                <div className="progress-wrap">
-                  <div
-                    className="progress-bar"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-
-                <p className="mini-text">Progress: {progressPercent}%</p>
-
-                {currentStep && (
-                  <>
-                    <p className="runner-prompt">{currentStep.prompt}</p>
-
-                    <div className="sound-card">
-                      <div className="sound-label">Now Playing</div>
-                      <div className="sound-title">{currentStep.soundTitle}</div>
-                      <div className="sound-description">
-                        {currentStep.soundDescription}
-                      </div>
-
-                      <audio ref={audioRef} className="audio-player" loop>
-                        <source src={currentStep.audioFile} type="audio/mpeg" />
-                        Your browser does not support the audio element.
-                      </audio>
-
-                      <div className="audio-controls">
-                        <button
-                          className="secondary"
-                          onClick={() => {
-                            const newMuted = !isMuted;
-                            setIsMuted(newMuted);
-                            if (audioRef.current) {
-                              audioRef.current.muted = newMuted;
-                            }
-                          }}
-                        >
-                          {isMuted ? "Unmute" : "Mute"}
-                        </button>
-
-                        <button
-                          className="secondary"
-                          onClick={handleShuffleCurrentSound}
-                        >
-                          Next Sound
-                        </button>
-
-                        <label className="volume-control">
-                          <span>Volume</span>
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.01"
-                            value={audioVolume}
-                            onChange={(e) => {
-                              const vol = Number(e.target.value);
-                              setAudioVolume(vol);
-                              if (audioRef.current) {
-                                audioRef.current.volume = vol;
-                              }
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </>
                 )}
+              </div>
 
-                <div className="button-row">
-                  <button className="primary" onClick={handlePauseResume}>
-                    {isRunning ? "Pause" : "Resume"}
-                  </button>
-                  <button className="secondary" onClick={handleNextStep}>
-                    Next Step
-                  </button>
-                  <button className="secondary" onClick={handleResetSession}>
-                    Reset
-                  </button>
+              <div className="quick-stats four-up">
+                <div className="stat-box">
+                  <div className="stat-label">Current Streak</div>
+                  <div className="stat-value" style={{ color: currentStreak > 0 ? "var(--purple)" : undefined }}>{currentStreak}</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-label">Best Streak</div>
+                  <div className="stat-value">{bestStreak}</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-label">Sessions Today</div>
+                  <div className="stat-value">{sessionsToday}</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-label">Favorite Mode</div>
+                  <div className="stat-value">{favoriteMode}</div>
                 </div>
               </div>
-            )}
-          </section>
+
+              <div className="quick-stats two-up" style={{ marginTop: 10 }}>
+                <div className="stat-box">
+                  <div className="stat-label">Completed Sessions</div>
+                  <div className="stat-value">{totalCompletedSessions}</div>
+                </div>
+                <div className="stat-box">
+                  <div className="stat-label">Total Focus Minutes</div>
+                  <div className="stat-value">{totalFocusMinutes}</div>
+                </div>
+              </div>
+
+              <div className="activity-strip">
+                <div className="activity-title">Last 7 Days</div>
+                <div className="activity-grid">
+                  {last7Days.map((day) => (
+                    <div
+                      key={day.key}
+                      className={`activity-day ${day.count > 0 ? "active-day" : ""} ${day.isToday ? "today-day" : ""}`}
+                    >
+                      <div className="activity-label">{day.label}</div>
+                      <div className="activity-count">{day.count}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="footer">
+              <h3 className="footer-title">About NeuroSciTunes</h3>
+              <p className="footer-copy">
+                NeuroSciTunes explores the relationship between neuroscience, music, focus, memory, and emotion. NeuroMix is the interactive side of that vision: helping people use structure, sound, and intention to do better work.
+              </p>
+            </section>
+          </div>
         )}
 
-        <section className="footer">
-          <h3 className="footer-title">About NeuroSciTunes</h3>
-          <p className="footer-copy">
-            NeuroSciTunes explores the relationship between neuroscience, music,
-            focus, memory, and emotion. NeuroMix is the interactive side of that
-            vision: helping people use structure, sound, and intention to do
-            better work.
-          </p>
-        </section>
+        {/* ── BUILD TAB ── */}
+        {activeTab === "build" && (
+          <div className="tab-screen">
+            <div className="grid">
+              <section className="card" id="session-builder">
+                <h2>Session Builder</h2>
+                <p className="section-copy">
+                  Choose your mode, then tell NeuroMix how you feel, what you need to do, and how much time you have.
+                </p>
+
+                <div className="template-section">
+                  <label>
+                    <span className="template-title">Study Templates</span>
+                    <select
+                      value={selectedTemplateId || ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) {
+                          setSelectedTemplateId(null);
+                          return;
+                        }
+                        const t = studyTemplates.find((t) => t.id === val);
+                        if (t) handleApplyTemplate(t);
+                      }}
+                    >
+                      <option value="">— Pick a template —</option>
+                      <optgroup label="MCAT">
+                        <option value="mcat-cp">MCAT C/P — Chem &amp; Physics</option>
+                        <option value="mcat-cars">MCAT CARS — Reading</option>
+                        <option value="mcat-bb">MCAT B/B — Bio &amp; Biochem</option>
+                        <option value="mcat-ps">MCAT P/S — Psych &amp; Soc</option>
+                        <option value="review-mistakes">Review Mistakes</option>
+                      </optgroup>
+                      <optgroup label="Study">
+                        <option value="anki">Anki / Flashcards</option>
+                      </optgroup>
+                      <optgroup label="Other">
+                        <option value="essay-writing">Essay Writing</option>
+                        <option value="overwhelmed-reset">Overwhelmed Reset</option>
+                      </optgroup>
+                    </select>
+                  </label>
+                  {selectedTemplateId && (
+                    <p className="mini-text" style={{ marginTop: 8 }}>
+                      {studyTemplates.find(t => t.id === selectedTemplateId)?.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="generation-toggle">
+                  <div className="generation-toggle-label">Plan Generation</div>
+                  <div className="generation-toggle-row">
+                    <button
+                      type="button"
+                      className={`generation-pill ${planGenerationMode === "smart" ? "generation-pill-active" : ""}`}
+                      onClick={() => setPlanGenerationMode("smart")}
+                    >
+                      Smart Plan
+                    </button>
+                    <button
+                      type="button"
+                      className={`generation-pill ${planGenerationMode === "ai" ? "generation-pill-active" : ""}`}
+                      onClick={() => setPlanGenerationMode("ai")}
+                    >
+                      AI Plan
+                    </button>
+                  </div>
+                  <p className="mini-text" style={{ marginTop: 10 }}>
+                    Smart Plan uses your built-in NeuroMix logic. AI Plan is structured for a future GPT-powered generator and currently falls back safely.
+                  </p>
+                </div>
+
+                <div className="mode-grid">
+                  {Object.entries(modeOptions).map(([key, option]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className={`mode-card ${mode === key ? "mode-card-active" : ""}`}
+                      onClick={() => setMode(key)}
+                    >
+                      <div className="mode-title">{option.label}</div>
+                      <div className="mode-description">{option.description}</div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="form-grid">
+                  <label>
+                    <span>Task</span>
+                    <div className="task-select-wrap">
+                      <select value={task === "mcat" ? "mcat" : task} onChange={(e) => { if (e.target.value === "mcat") { setShowMcatDropdown(true); setTask("mcat"); } else { setShowMcatDropdown(false); setTask(e.target.value); } }}>
+                        <option value="studying">Studying</option>
+                        <option value="writing">Writing</option>
+                        <option value="creative">Creative</option>
+                        <option value="admin">Admin / chores</option>
+                        <option value="mcat">MCAT ▾</option>
+                      </select>
+                    </div>
+                    {task === "mcat" && (
+                      <div className="mcat-dropdown">
+                        <div className="mcat-dropdown-label">Pick a section</div>
+                        {[
+                          { id: "mcat-cp", label: "C/P — Chem & Physics" },
+                          { id: "mcat-cars", label: "CARS — Reading" },
+                          { id: "mcat-bb", label: "B/B — Bio & Biochem" },
+                          { id: "mcat-ps", label: "P/S — Psych & Soc" },
+                          { id: "review-mistakes", label: "Review Mistakes" },
+                        ].map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className={`mcat-section-btn ${selectedTemplateId === s.id ? "mcat-section-active" : ""}`}
+                            onClick={() => handleApplyTemplate(studyTemplates.find(t => t.id === s.id))}
+                          >
+                            {s.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </label>
+                  <label>
+                    <span>Mood</span>
+                    <select value={mood} onChange={(e) => setMood(e.target.value)}>
+                      <option value="anxious">Anxious</option>
+                      <option value="neutral">Neutral</option>
+                      <option value="tired">Tired</option>
+                      <option value="motivated">Motivated</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Energy</span>
+                    <select value={energy} onChange={(e) => setEnergy(e.target.value)}>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Minutes</span>
+                    <input
+                      type="number"
+                      min={10}
+                      max={240}
+                      value={minutes}
+                      onChange={(e) => setMinutes(e.target.value)}
+                    />
+                  </label>
+                </div>
+
+                <label style={{ marginTop: 14 }}>
+                  <span>Describe your situation</span>
+                  <textarea
+                    value={situation}
+                    onChange={(e) => setSituation(e.target.value)}
+                    placeholder="Example: I'm overwhelmed and need to study biochem for 45 minutes without spiraling."
+                    rows={4}
+                    className="situation-box"
+                  />
+                </label>
+
+                <div className="preset-builder">
+                  <label>
+                    <span>Preset Name</span>
+                    <input
+                      type="text"
+                      value={presetName}
+                      onChange={(e) => setPresetName(e.target.value)}
+                      placeholder="Example: MCAT Deep Work 90"
+                    />
+                  </label>
+                  <div className="button-row compact-row">
+                    <button className="secondary" onClick={handleSavePreset}>
+                      Save Preset
+                    </button>
+                  </div>
+                </div>
+
+                <div className="button-row">
+                  <button
+                    className="primary"
+                    onClick={async () => {
+                      await handleGeneratePlan();
+                      switchTab("session");
+                    }}
+                    disabled={isGeneratingPlan}
+                  >
+                    {isGeneratingPlan
+                      ? "Generating..."
+                      : planGenerationMode === "ai"
+                      ? "Generate AI Plan"
+                      : "Generate Plan"}
+                  </button>
+                  <button className="secondary" onClick={handleClear}>
+                    Clear
+                  </button>
+                </div>
+              </section>
+
+              <section className="card">
+                <h2>Quick Overview</h2>
+                <p className="section-copy">
+                  NeuroMix uses modes to shape your session structure, not just the text prompts.
+                </p>
+
+                <div className="quick-stats">
+                  <div className="stat-box">
+                    <div className="stat-label">Mode</div>
+                    <div className="stat-value">{modeOptions[mode].label}</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="stat-label">Task</div>
+                    <div className="stat-value">{task}</div>
+                  </div>
+                  <div className="stat-box">
+                    <div className="stat-label">Time</div>
+                    <div className="stat-value">{minutes} min</div>
+                  </div>
+                </div>
+
+                <p className="mini-text" style={{ marginTop: 16 }}>{modeOptions[mode].description}</p>
+                <p className="mini-text" style={{ marginTop: 12 }}>
+                  {situation ? `Situation: ${situation}` : "Add a situation to make your session more personal and context-aware."}
+                </p>
+                {selectedTemplate && (
+                  <p className="mini-text" style={{ marginTop: 12 }}>
+                    Template: <strong>{selectedTemplate.name}</strong>
+                  </p>
+                )}
+                <p className="mini-text" style={{ marginTop: 12 }}>
+                  Generation Mode: <strong>{planGenerationMode === "ai" ? "AI Plan" : "Smart Plan"}</strong>
+                </p>
+
+                <div className="recommendation-card">
+                  <div className="recommendation-label">Neuro Recommendation</div>
+                  <div className="recommendation-main">
+                    Try <strong>{recommendedMinutes} minutes</strong>
+                    {recommendedMode ? <> in <strong>{modeOptions[recommendedMode].label}</strong></> : null}
+                  </div>
+                  <p className="mini-text" style={{ marginTop: 8 }}>{recommendationReason}</p>
+                  {completedSessions.length > 0 && (
+                    <p className="mini-text" style={{ marginTop: 8 }}>
+                      Avg completed: <strong>{averageCompletedMinutes} min</strong>
+                    </p>
+                  )}
+                  <div className="button-row compact-row" style={{ marginTop: 12 }}>
+                    <button className="secondary" onClick={handleApplyRecommendation}>
+                      Apply Recommendation
+                    </button>
+                  </div>
+                </div>
+
+                <div className="adaptive-card">
+                  <div className="recommendation-label">Adaptive Timing</div>
+                  <div className="adaptive-main">
+                    <strong>{adaptiveTimingProfile.focusBlock} min</strong> focus •{" "}
+                    <strong>{adaptiveTimingProfile.shortBreak} min</strong> short break •{" "}
+                    <strong>{adaptiveTimingProfile.longBreak} min</strong> long break
+                  </div>
+                  <p className="mini-text" style={{ marginTop: 8 }}>{adaptiveTimingProfile.reason}</p>
+                  <div className="button-row compact-row" style={{ marginTop: 12 }}>
+                    <button className="secondary" onClick={() => setUseAdaptiveTiming((prev) => !prev)}>
+                      {useAdaptiveTiming ? "Adaptive Timing On" : "Adaptive Timing Off"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="adaptive-card">
+                  <div className="recommendation-label">Streak Reminders</div>
+                  <div className="adaptive-main">
+                    Notifications: <strong>{notificationsEnabled && notificationPermission === "granted" ? "On" : "Off"}</strong>
+                  </div>
+                  <p className="mini-text" style={{ marginTop: 8 }}>
+                    Uses your browser's notification system. Works on desktop when the tab is open — click Enable then Send Test to try it. On mobile, notifications only fire while the page is active.
+                  </p>
+                  <div className="button-row compact-row" style={{ marginTop: 12 }}>
+                    <button className="secondary" onClick={handleEnableNotifications}>Enable Notifications</button>
+                    <button className="secondary" onClick={handleSendTestNotification}>Send Test</button>
+                  </div>
+                </div>
+
+                {showPresetBanner && (
+                  <div className="favorited-banner" style={{ marginTop: 14 }}>Preset saved.</div>
+                )}
+              </section>
+            </div>
+          </div>
+        )}
+
+        {/* ── SESSION TAB ── */}
+        {activeTab === "session" && (
+          <div className="tab-screen">
+            <section className="card">
+              <div className="section-row">
+                <h2>Generated Session Plan</h2>
+                {plan && (
+                  <button className="primary" onClick={handleFavoriteCurrentSession}>
+                    Save to Favorites
+                  </button>
+                )}
+              </div>
+
+              {showFavoritedBanner && (
+                <div className="favorited-banner">Session saved to favorites.</div>
+              )}
+              {planError && <div className="plan-info-banner">{planError}</div>}
+
+              {!plan ? (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                  <p className="empty-text" style={{ marginBottom: 16 }}>
+                    No session yet. Head to Build to generate your plan.
+                  </p>
+                  <button className="primary" onClick={() => switchTab("build")}>
+                    Go to Build →
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="session-chips">
+                    <span className="session-chip">{modeOptions[mode].label}</span>
+                    <span className="session-chip">{task}</span>
+                    <span className="session-chip">{totalPlanned} min</span>
+                    <span className="session-chip">{mood}</span>
+                  </div>
+
+                  <div className="section-row" style={{ marginTop: 10 }}>
+                    <p className="summary-text">
+                      Total planned: <strong>{totalPlanned} minutes</strong>
+                    </p>
+                    <div className="add-step-row">
+                      <button className="secondary" onClick={() => handleAddStep("warmup")}>+ Warm-up</button>
+                      <button className="secondary" onClick={() => handleAddStep("focus")}>+ Focus</button>
+                      <button className="secondary" onClick={() => handleAddStep("break")}>+ Break</button>
+                      <button className="secondary" onClick={() => handleAddStep("cooldown")}>+ Cool-down</button>
+                    </div>
+                  </div>
+
+                  <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={plan.map((step) => step.id)} strategy={verticalListSortingStrategy}>
+                      <div className="step-list">
+                        {plan.map((step, index) => (
+                          <SortableStepCard
+                            key={step.id}
+                            id={step.id}
+                            step={editingIndex === index ? draftStep : step}
+                            isActive={sessionStarted && index === currentStepIndex}
+                            isEditing={editingIndex === index}
+                            onEdit={() => handleEditStep(index)}
+                            onDelete={() => handleDeleteStep(index)}
+                            onFieldChange={handleStepFieldChange}
+                            onSave={handleSaveStep}
+                            onCancel={handleCancelEdit}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                </>
+              )}
+            </section>
+
+            {plan && (
+              <section className="card" style={{ marginTop: 16 }}>
+                <h2>Session Runner</h2>
+
+                {showCompletedBanner && (
+                  <div className="completed-banner">Session complete. Nice work.</div>
+                )}
+
+                {showFeedbackCard && (
+                  <div className="feedback-card">
+                    <div className="feedback-title">How did that go?</div>
+                    <div className="feedback-group">
+                      <div className="feedback-label">Session length</div>
+                      <div className="feedback-options">
+                        {["Too short", "Just right", "Too long"].map((opt) => (
+                          <button key={opt} className={`feedback-pill ${feedbackLength === opt ? "feedback-pill-active" : ""}`} onClick={() => setFeedbackLength(opt)}>{opt}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="feedback-group">
+                      <div className="feedback-label">Focus quality</div>
+                      <div className="feedback-options">
+                        {["Bad", "Okay", "Great"].map((opt) => (
+                          <button key={opt} className={`feedback-pill ${feedbackFocus === opt ? "feedback-pill-active" : ""}`} onClick={() => setFeedbackFocus(opt)}>{opt}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="feedback-group">
+                      <div className="feedback-label">Music fit</div>
+                      <div className="feedback-options">
+                        {["Bad", "Okay", "Great"].map((opt) => (
+                          <button key={opt} className={`feedback-pill ${feedbackMusic === opt ? "feedback-pill-active" : ""}`} onClick={() => setFeedbackMusic(opt)}>{opt}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="feedback-group">
+                      <div className="feedback-label">Optional note</div>
+                      <textarea className="situation-box" rows={2} placeholder="e.g. breaks were too short, warmup helped..." value={feedbackNote} onChange={(e) => setFeedbackNote(e.target.value)} />
+                    </div>
+                    <div className="button-row compact-row">
+                      <button className="primary" onClick={handleSubmitFeedback}>Save Feedback</button>
+                      <button className="secondary" onClick={handleSkipFeedback}>Skip</button>
+                    </div>
+                  </div>
+                )}
+
+                {!sessionStarted ? (
+                  <div className="runner-box">
+                    <p className="runner-prompt">
+                      Your {modeOptions[mode].label.toLowerCase()} session is ready. Start when you're ready to lock in.
+                    </p>
+                    <button className="primary" onClick={handleStartSession}>Start Session</button>
+                  </div>
+                ) : (
+                  <div className="runner-box">
+                    <div className="current-step-label">Current Step</div>
+                    <div className="current-step-title">{currentStep ? currentStep.title : "Session Complete"}</div>
+                    <div className="timer">{formatTime(secondsLeft)}</div>
+                    <div className="progress-wrap">
+                      <div className="progress-bar" style={{ width: `${progressPercent}%` }} />
+                    </div>
+                    <p className="mini-text">Progress: {progressPercent}%</p>
+
+                    {currentStep && (
+                      <>
+                        <p className="runner-prompt">{currentStep.prompt}</p>
+                        <div className="sound-card">
+                          <div className="sound-label">Now Playing</div>
+                          <div className="sound-title">{currentStep.soundTitle}</div>
+                          <div className="sound-description">{currentStep.soundDescription}</div>
+                          <audio ref={audioRef} className="audio-player" loop>
+                            <source src={currentStep.audioFile} type="audio/mpeg" />
+                          </audio>
+                          <div className="audio-controls">
+                            <button className="secondary" onClick={() => { const newMuted = !isMuted; setIsMuted(newMuted); if (audioRef.current) audioRef.current.muted = newMuted; }}>
+                              {isMuted ? "Unmute" : "Mute"}
+                            </button>
+                            <button className="secondary" onClick={handleShuffleCurrentSound}>Next Sound</button>
+                            <label className="volume-control">
+                              <span>Volume</span>
+                              <input type="range" min="0" max="1" step="0.01" value={audioVolume} onChange={(e) => { const vol = Number(e.target.value); setAudioVolume(vol); if (audioRef.current) audioRef.current.volume = vol; }} />
+                            </label>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="button-row">
+                      <button className="primary" onClick={handlePauseResume}>{isRunning ? "Pause" : "Resume"}</button>
+                      <button className="secondary" onClick={handleNextStep}>Next Step</button>
+                      <button className="secondary" onClick={handleResetSession}>Reset</button>
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+          </div>
+        )}
+
+        {/* ── HISTORY TAB ── */}
+        {activeTab === "history" && (
+          <div className="tab-screen">
+            <section className="card">
+              <div className="section-row">
+                <h2>Saved Presets</h2>
+                {presets.length > 0 && <button className="secondary" onClick={handleClearPresets}>Clear</button>}
+              </div>
+              {presets.length === 0 ? (
+                <p className="empty-text">No presets yet. Save a setup you use often.</p>
+              ) : (
+                <div className="recent-grid">
+                  {presets.map((preset) => (
+                    <PresetCard key={preset.id} preset={preset} onLoad={(p) => { handleLoadPreset(p); switchTab("build"); }} onRemove={handleRemovePreset} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="card" style={{ marginTop: 16 }}>
+              <div className="section-row">
+                <h2>Favorite Sessions</h2>
+                {favoriteSessions.length > 0 && <button className="secondary" onClick={handleClearFavoriteSessions}>Clear</button>}
+              </div>
+              {favoriteSessions.length === 0 ? (
+                <p className="empty-text">No favorites yet. Generate a session and save one you want to reuse.</p>
+              ) : (
+                <div className="recent-grid">
+                  {favoriteSessions.map((session) => (
+                    <FavoriteSessionCard key={session.id} session={session} onLoad={(s) => { handleLoadSession(s); switchTab("session"); }} onRemove={handleRemoveFavorite} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="card" style={{ marginTop: 16 }}>
+              <div className="section-row">
+                <h2>Recent Sessions</h2>
+                {recentSessions.length > 0 && <button className="secondary" onClick={handleClearRecentSessions}>Clear</button>}
+              </div>
+              {recentSessions.length === 0 ? (
+                <p className="empty-text">No saved sessions yet. Generate a plan and it will appear here.</p>
+              ) : (
+                <div className="recent-grid">
+                  {recentSessions.map((session) => (
+                    <RecentSessionCard key={session.id} session={session} onLoad={(s) => { handleLoadSession(s); switchTab("session"); }} />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="card" style={{ marginTop: 16 }}>
+              <div className="section-row">
+                <h2>Session Feedback</h2>
+                {feedbackHistory.length > 0 && (
+                  <button className="secondary" onClick={() => { setFeedbackHistory([]); localStorage.removeItem("neuromix_feedback_history"); }}>Clear</button>
+                )}
+              </div>
+              {feedbackHistory.length === 0 ? (
+                <p className="empty-text">No feedback yet. Complete a session and rate it — the AI uses this to improve future plans.</p>
+              ) : (
+                <div className="recent-grid">
+                  {feedbackHistory.map((f) => (
+                    <div key={f.id} className="feedback-history-card">
+                      <div className="recent-top">
+                        <div className="recent-title">{f.task} • {f.mood} • {f.minutes} min</div>
+                        <div className="recent-date">{formatSavedDate(f.submittedAt)}</div>
+                      </div>
+                      <div className="recent-mode">{f.mode}</div>
+                      <div className="feedback-history-ratings">
+                        {f.length && <span className={`feedback-rating-chip ${f.length === "Just right" ? "chip-good" : "chip-warn"}`}>Length: {f.length}</span>}
+                        {f.focus && <span className={`feedback-rating-chip ${f.focus === "Great" ? "chip-good" : f.focus === "Bad" ? "chip-bad" : "chip-warn"}`}>Focus: {f.focus}</span>}
+                        {f.music && <span className={`feedback-rating-chip ${f.music === "Great" ? "chip-good" : f.music === "Bad" ? "chip-bad" : "chip-warn"}`}>Music: {f.music}</span>}
+                      </div>
+                      {f.note && <p className="feedback-history-note">"{f.note}"</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+
+        </div>
       </main>
     </div>
   );
