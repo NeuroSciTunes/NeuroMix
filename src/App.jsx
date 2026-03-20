@@ -2368,36 +2368,13 @@ export default function App() {
                 <div className="form-grid">
                   <label>
                     <span>Task</span>
-                    <div className="task-select-wrap">
-                      <select value={task === "mcat" ? "mcat" : task} onChange={(e) => { if (e.target.value === "mcat") { setShowMcatDropdown(true); setTask("mcat"); } else { setShowMcatDropdown(false); setTask(e.target.value); } }}>
-                        <option value="studying">Studying</option>
-                        <option value="writing">Writing</option>
-                        <option value="creative">Creative</option>
-                        <option value="admin">Admin / chores</option>
-                        <option value="mcat">MCAT ▾</option>
-                      </select>
-                    </div>
-                    {task === "mcat" && (
-                      <div className="mcat-dropdown">
-                        <div className="mcat-dropdown-label">Pick a section</div>
-                        {[
-                          { id: "mcat-cp", label: "C/P — Chem & Physics" },
-                          { id: "mcat-cars", label: "CARS — Reading" },
-                          { id: "mcat-bb", label: "B/B — Bio & Biochem" },
-                          { id: "mcat-ps", label: "P/S — Psych & Soc" },
-                          { id: "review-mistakes", label: "Review Mistakes" },
-                        ].map((s) => (
-                          <button
-                            key={s.id}
-                            type="button"
-                            className={`mcat-section-btn ${selectedTemplateId === s.id ? "mcat-section-active" : ""}`}
-                            onClick={() => handleApplyTemplate(studyTemplates.find(t => t.id === s.id))}
-                          >
-                            {s.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    <select value={task} onChange={(e) => setTask(e.target.value)}>
+                      <option value="studying">Studying</option>
+                      <option value="writing">Writing</option>
+                      <option value="creative">Creative</option>
+                      <option value="admin">Admin / Chores</option>
+                      <option value="mcat">MCAT</option>
+                    </select>
                   </label>
                   <label>
                     <span>Mood</span>
